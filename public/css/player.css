@@ -1,0 +1,403 @@
+/* Player (phone) page. Mobile-first, large touch targets, no page zoom/scroll fights. */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+.screen {
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--teal-strong);
+}
+
+.big-msg {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.soft {
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.me .emo {
+  font-size: 44px;
+}
+
+/* ---------------------------------------------------------------- join */
+
+.join-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.join-form label {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.join-form input {
+  width: 100%;
+  font: inherit;
+  font-size: 20px; /* ≥16px prevents iOS zoom-on-focus */
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+}
+
+.join-form input:focus {
+  border-color: var(--teal);
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.emoji-grid button {
+  aspect-ratio: 1;
+  font-size: 30px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  line-height: 1;
+}
+
+.emoji-grid button[aria-pressed="true"] {
+  border-color: var(--teal);
+  background: var(--mint);
+  transform: scale(1.06);
+}
+
+.err {
+  color: #c4553a;
+  font-size: 15px;
+  min-height: 1.5em;
+  margin: 0;
+}
+
+.btn-primary {
+  width: 100%;
+  min-height: 60px;
+  border-radius: 16px;
+  background: var(--teal);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+}
+
+/* ---------------------------------------------------------------- countdown + tap race */
+
+.countdown {
+  font-size: 140px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--teal);
+}
+
+.countdown.pop {
+  animation: pop 0.5s ease-out;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(1.5);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.tap-btn {
+  width: min(82vw, 360px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #5fc4b6, var(--teal) 55%, var(--teal-strong));
+  color: #fff;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.3;
+  padding: 24px;
+  box-shadow: 0 16px 40px rgba(46, 140, 128, 0.45), inset 0 -8px 0 rgba(0, 0, 0, 0.12);
+  transition: transform 0.06s;
+}
+
+.tap-btn:active,
+.tap-btn.hit {
+  transform: scale(0.94);
+}
+
+.tap-btn:disabled {
+  filter: grayscale(0.7);
+  opacity: 0.55;
+}
+
+.tap-meta {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- win */
+
+.win-emoji {
+  font-size: 96px;
+  line-height: 1;
+  animation: pop 0.6s ease-out;
+}
+
+.claim {
+  background: var(--surface);
+  border: 3px dashed var(--teal);
+  border-radius: var(--radius);
+  padding: 14px 28px;
+}
+
+.claim .label {
+  font-size: 16px;
+  color: var(--ink-soft);
+}
+
+.claim .code {
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--teal-strong);
+  line-height: 1.1;
+}
+
+/* ---------------------------------------------------------------- queue ticket slip */
+
+.ticket {
+  position: relative;
+  width: min(100%, 320px);
+  background: #fffdf8;
+  color: #23403d; /* paper stays paper in dark mode */
+  border-radius: 10px;
+  padding: 18px 20px 14px;
+  box-shadow: var(--shadow);
+  /* perforated top/bottom edges */
+  -webkit-mask: radial-gradient(circle 6px at 50% 0, transparent 98%, #000) 0 0 / 18px 51% repeat-x,
+    radial-gradient(circle 6px at 50% 100%, transparent 98%, #000) 0 100% / 18px 51% repeat-x;
+  mask: radial-gradient(circle 6px at 50% 0, transparent 98%, #000) 0 0 / 18px 51% repeat-x,
+    radial-gradient(circle 6px at 50% 100%, transparent 98%, #000) 0 100% / 18px 51% repeat-x;
+}
+
+.ticket .t-head {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #5b7471;
+  border-bottom: 2px dashed #e1d9cc;
+  padding-bottom: 8px;
+}
+
+.ticket .t-num {
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #1f6e64;
+  margin: 6px 0 2px;
+}
+
+.ticket .t-who {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ticket .t-foot {
+  font-size: 14px;
+  color: #5b7471;
+  border-top: 2px dashed #e1d9cc;
+  margin-top: 10px;
+  padding-top: 8px;
+}
+
+.ticket .t-bar {
+  height: 26px;
+  margin-top: 8px;
+  background: repeating-linear-gradient(90deg, #23403d 0 2px, transparent 2px 4px, #23403d 4px 7px, transparent 7px 9px,
+      #23403d 9px 10px, transparent 10px 13px);
+  opacity: 0.75;
+}
+
+.ticket.small {
+  padding: 10px 16px 8px;
+}
+
+.ticket.small .t-num {
+  font-size: 40px;
+  margin: 2px 0 0;
+}
+
+.ticket.small .t-bar,
+.ticket.small .t-foot {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- waiting room */
+
+#s-waiting {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.calling {
+  font-size: 16px;
+  color: var(--ink-soft);
+}
+
+.calling b {
+  color: var(--teal-strong);
+  font-size: 22px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+  background: var(--mint);
+  padding: 5px;
+  border-radius: 14px;
+}
+
+.tabs button {
+  min-height: 48px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.tabs button[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--teal-strong);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.play-area {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 300px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  touch-action: none; /* bubble taps must not scroll/zoom */
+}
+
+#bubbles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.pop-count {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+.breathe {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.breathe .circle {
+  width: 70%;
+  max-width: 280px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--mint) 0%, var(--teal) 100%);
+  opacity: 0.85;
+  will-change: transform;
+}
+
+.breathe .word {
+  position: absolute;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- end */
+
+.hotline {
+  margin-top: 8px;
+  font-weight: 700;
+  color: var(--teal-strong);
+}
+
+/* ---------------------------------------------------------------- overlays */
+
+.banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+  background: var(--sun);
+  color: #3b3220;
+  text-align: center;
+  font-weight: 600;
+}
+
+#confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 40;
+}

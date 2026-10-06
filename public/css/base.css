@@ -1,0 +1,89 @@
+/* Shared tokens + resets for player and host pages.
+   Palette: hospital-clean but warm — cream paper, calm teal, soft peach accents. */
+
+:root {
+  --bg: #fbf7f1;
+  --surface: #ffffff;
+  --ink: #23403d;
+  --ink-soft: #5b7471;
+  --teal: #2e8c80;
+  --teal-strong: #1f6e64;
+  --mint: #dff2ec;
+  --peach: #f6b48c;
+  --sun: #f7d488;
+  --line: #e7e0d5;
+  --shadow: 0 10px 30px rgba(35, 64, 61, 0.12);
+  --radius: 20px;
+  --font: "Prompt", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+
+/* Phones follow the OS theme. The host page pins data-theme="light". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121b1a;
+    --surface: #1b2826;
+    --ink: #e8f1ee;
+    --ink-soft: #9fb5b1;
+    --teal: #58c2b3;
+    --teal-strong: #7fd6c9;
+    --mint: #1f3a36;
+    --peach: #e29a72;
+    --sun: #d9b865;
+    --line: #2a3b38;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* No double-tap zoom, no text selection, no iOS callout on buttons. */
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "mind-queue",
+  "version": "1.0.0",
+  "private": true,
+  "description": "คิวหน้าห้องจิตแพทย์ — realtime classroom warm-up game (Cloudflare Workers + Durable Objects)",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --ip 0.0.0.0 --port 8790",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "loadtest": "node scripts/loadtest.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261005.1",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.147.0",
+    "ws": "^8.22.0"
+  }
+}

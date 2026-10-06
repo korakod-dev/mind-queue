@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#2e8c80" />
+    <title>คิวหน้าห้องจิตแพทย์</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/player.css" />
+  </head>
+  <body>
+    <!-- Text content comes from STR (js/strings.js) via data-str. -->
+    <div class="banner" id="banner" data-str="reconnecting" hidden></div>
+    <canvas id="confetti" hidden></canvas>
+
+    <!-- first connect -->
+    <section class="screen" id="s-boot">
+      <h1 class="title" data-str="joinTitle"></h1>
+      <p class="soft">…</p>
+    </section>
+
+    <!-- LOBBY / late join -->
+    <section class="screen" id="s-join" hidden>
+      <h1 class="title" data-str="joinTitle"></h1>
+      <form class="join-form" id="join-form" autocomplete="off">
+        <label for="nick" data-str="joinNickname"></label>
+        <input id="nick" name="nick" type="text" enterkeyhint="done" autocapitalize="off" spellcheck="false" />
+        <label data-str="joinEmoji"></label>
+        <div class="emoji-grid" id="emoji-grid" role="group"></div>
+        <p class="err" id="join-err" aria-live="polite"></p>
+        <button class="btn-primary" id="join-btn" type="submit" data-str="joinButton" disabled></button>
+      </form>
+    </section>
+
+    <!-- joined, waiting for the host -->
+    <section class="screen" id="s-wait" hidden>
+      <div class="me"><span class="emo" data-you="emoji"></span><span data-you="nickname"></span></div>
+      <p class="big-msg" data-str="waitForHost"></p>
+    </section>
+
+    <!-- TAP_COUNTDOWN + TAP_RACE -->
+    <section class="screen" id="s-tap" hidden>
+      <p class="tap-meta" id="tap-top" data-str="getReady"></p>
+      <div class="countdown num" id="countdown"></div>
+      <button class="tap-btn" id="tap-btn" data-str="tapButton" disabled></button>
+      <p class="tap-meta num" id="tap-count"></p>
+    </section>
+
+    <!-- race or draw winner -->
+    <section class="screen" id="s-win" hidden>
+      <div class="win-emoji" data-you="emoji"></div>
+      <p class="big-msg" id="win-msg"></p>
+      <div class="claim">
+        <div class="label" data-str="claimCodeLabel"></div>
+        <div class="code num" id="win-code"></div>
+      </div>
+    </section>
+
+    <!-- TAP_RESULT for everyone else -->
+    <section class="screen" id="s-ticket" hidden>
+      <div class="ticket" id="ticket-big"></div>
+    </section>
+
+    <!-- WAITING_ROOM -->
+    <section class="screen" id="s-waiting" hidden>
+      <div class="ticket small" id="ticket-small"></div>
+      <div class="calling"><span data-str="nowCalling"></span> <b class="num" id="calling-num"></b></div>
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-bubble" aria-selected="true" data-str="bubbleTab"></button>
+        <button role="tab" id="tab-breathe" aria-selected="false" data-str="breatheTab"></button>
+      </div>
+      <div class="play-area">
+        <canvas id="bubbles"></canvas>
+        <div class="pop-count num" id="pop-count"></div>
+        <div class="breathe" id="breathe" hidden>
+          <div class="circle" id="breathe-circle"></div>
+          <div class="word" id="breathe-word"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVEAL -->
+    <section class="screen" id="s-reveal" hidden>
+      <p class="big-msg" data-str="lookAtScreen"></p>
+    </section>
+
+    <!-- END -->
+    <section class="screen" id="s-end" hidden>
+      <div class="win-emoji">🍬</div>
+      <p class="big-msg" data-str="endPhone"></p>
+      <p class="hotline" data-str="hotline"></p>
+    </section>
+
+    <script src="/js/strings.js"></script>
+    <script src="/js/net.js"></script>
+    <script src="/js/confetti.js"></script>
+    <script src="/js/bubbles.js"></script>
+    <script src="/js/player.js"></script>
+  </body>
+</html>

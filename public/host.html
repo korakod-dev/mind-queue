@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="th" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>คิวหน้าห้องจิตแพทย์ · จอใหญ่</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/host.css" />
+  </head>
+  <body>
+    <canvas id="confetti" hidden></canvas>
+    <div class="offline-dot" id="offline" data-str="reconnecting" hidden></div>
+
+    <!-- boot / errors -->
+    <section class="stage" id="h-boot">
+      <h1 class="h-title" data-str="joinTitle"></h1>
+      <p class="h-sub" id="boot-msg">…</p>
+    </section>
+
+    <!-- LOBBY -->
+    <section class="stage" id="h-lobby" hidden>
+      <div class="qr-card">
+        <div id="qr"></div>
+        <div class="qr-url" id="qr-url"></div>
+      </div>
+      <div class="lobby-right">
+        <h1 class="h-title" data-str="joinTitle"></h1>
+        <div class="joined num" id="joined"></div>
+        <div class="emoji-wall" id="emoji-wall"></div>
+      </div>
+    </section>
+
+    <!-- TAP_COUNTDOWN / TAP_RACE -->
+    <section class="stage" id="h-race" hidden>
+      <h1 class="h-title" data-str="tapButton"></h1>
+      <div class="giant num" id="race-big"></div>
+      <div class="progress"><div id="race-bar"></div></div>
+      <p class="h-sub num" id="race-sub"></p>
+    </section>
+
+    <!-- TAP_RESULT -->
+    <section class="stage" id="h-result" hidden>
+      <div class="winner-emoji" id="res-emoji"></div>
+      <p class="h-line" id="res-name"></p>
+      <div class="claim-box" id="res-claim">
+        <span class="label" data-str="claimCodeLabel"></span><span class="code num" id="res-code"></span>
+      </div>
+      <p class="h-sub num" id="res-taps"></p>
+    </section>
+
+    <!-- WAITING_ROOM -->
+    <section class="stage" id="h-waiting" hidden>
+      <div class="board">
+        <div class="label" data-str="nowCalling"></div>
+        <div class="led num" id="led"></div>
+        <div class="timer num" id="wait-timer"></div>
+        <div class="ahead num" id="wait-ahead"></div>
+      </div>
+      <div class="side">
+        <div class="pops num" id="wait-pops"></div>
+        <div class="winners" id="winners"></div>
+      </div>
+      <div class="announce" id="announce" hidden>
+        <p class="h-line" id="ann-text"></p>
+        <div class="winner-emoji" id="ann-emoji"></div>
+        <p class="h-line" id="ann-name"></p>
+        <div class="claim-box">
+          <span class="label" data-str="claimCodeLabel"></span><span class="code num" id="ann-code"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVEAL -->
+    <section class="stage" id="h-reveal" hidden>
+      <div class="reveal-frozen" id="rv-frozen">
+        <p class="h-line"><span data-str="nowCalling"></span> <span class="num" id="rv-called"></span></p>
+      </div>
+      <p class="reveal-line" id="rv-1" hidden></p>
+      <p class="reveal-line" id="rv-2" hidden></p>
+      <p class="reveal-line" id="rv-3" hidden></p>
+      <p class="source" id="rv-source" hidden></p>
+    </section>
+
+    <!-- END -->
+    <section class="stage" id="h-end" hidden>
+      <div class="end-msg" data-str="endBig"></div>
+      <div class="footer" data-str="hotline"></div>
+    </section>
+
+    <!-- presenter controls: Space/→ next · D draw · R reset · H hide · F fullscreen -->
+    <div class="ctl" id="ctl">
+      <span class="info num" id="ctl-info"></span>
+      <button class="primary" id="ctl-next" data-str="ctlNext"></button>
+      <button id="ctl-draw" data-str="ctlDraw" hidden></button>
+      <button id="ctl-fs" data-str="ctlFullscreen"></button>
+      <button id="ctl-reset" data-str="ctlReset"></button>
+      <button id="ctl-hide" data-str="ctlHide"></button>
+    </div>
+    <button class="ctl-show" id="ctl-show" title="H" hidden>⌃</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="/js/strings.js"></script>
+    <script src="/js/net.js"></script>
+    <script src="/js/confetti.js"></script>
+    <script src="/js/host.js"></script>
+  </body>
+</html>

@@ -1,0 +1,34 @@
+{
+  // Wrangler config for "คิวหน้าห้องจิตแพทย์".
+  // Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mind-queue",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+
+  // Static frontend. Only /ws reaches the Worker; every other path is served
+  // directly from ./public (e.g. /host → host.html via default html_handling).
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/ws"]
+  },
+
+  // One Durable Object holds the whole game room.
+  // Workers Free plan only supports SQLite-backed Durable Objects → new_sqlite_classes.
+  "durable_objects": {
+    "bindings": [{ "name": "ROOM", "class_name": "GameRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameRoom"] }],
+
+  // Custom domain (change the hostname here if you pick another subdomain).
+  // The korakod.dev zone must be in the same Cloudflare account you deploy from.
+  "routes": [{ "pattern": "queue.korakod.dev", "custom_domain": true }],
+  "workers_dev": true,
+
+  "observability": { "enabled": true }
+
+  // Secret (not stored here): HOST_KEY
+  //   production: npx wrangler secret put HOST_KEY
+  //   local dev:  put HOST_KEY=... in .dev.vars
+}

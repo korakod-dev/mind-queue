@@ -1,0 +1,392 @@
+<title>คู่มือผู้ช่วยแจกขนม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;800&family=Sarabun:wght@400;600&display=swap">
+<style>
+/* Layout: one phone-first column read top to bottom, styled like a hospital queue slip (same palette as the game). */
+:root {
+  --bg: #f6f3ec;
+  --paper: #fffdf8;
+  --ink: #23403d;
+  --ink-soft: #5d7470;
+  --teal: #2e8c80;
+  --teal-deep: #1d4743;
+  --peach: #f3a77c;
+  --peach-soft: #fbe3d3;
+  --mint: #dff2ec;
+  --line: #e3dbcd;
+  --led: #ffd27d;
+  --bad: #b8492f;
+  --display: "Prompt", "Noto Sans Thai", system-ui, sans-serif;
+  --body: "Sarabun", "Noto Sans Thai", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111a19; --paper: #1a2725; --ink: #e6f0ed; --ink-soft: #9db3af; --teal: #5cc2b3;
+    --teal-deep: #0f2f2c; --peach: #e9a07a; --peach-soft: #3a2a22; --mint: #1d3532; --line: #2b3d3a;
+    --led: #ffd27d; --bad: #ef8a70; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111a19; --paper: #1a2725; --ink: #e6f0ed; --ink-soft: #9db3af; --teal: #5cc2b3;
+  --teal-deep: #0f2f2c; --peach: #e9a07a; --peach-soft: #3a2a22; --mint: #1d3532; --line: #2b3d3a;
+  --led: #ffd27d; --bad: #ef8a70; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.65;
+  padding-inline: 16px;
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.3; margin: 0; text-wrap: balance; }
+h2 { font-size: 22px; font-weight: 600; }
+p { margin: 0; }
+.eyebrow {
+  font-family: var(--display); font-size: 13px; font-weight: 500; letter-spacing: 0.06em;
+  color: var(--teal); text-transform: uppercase;
+}
+.num { font-variant-numeric: tabular-nums; }
+section { display: flex; flex-direction: column; gap: 16px; }
+.lead { color: var(--ink-soft); }
+
+/* ---------- hero: the job, as a queue slip */
+.slip {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: 22px 22px 18px;
+  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 10px 30px rgba(20, 50, 46, 0.10);
+  -webkit-mask: radial-gradient(circle 7px at 50% 0, transparent 98%, #000) 0 0 / 20px 51% repeat-x,
+                radial-gradient(circle 7px at 50% 100%, transparent 98%, #000) 0 100% / 20px 51% repeat-x;
+          mask: radial-gradient(circle 7px at 50% 0, transparent 98%, #000) 0 0 / 20px 51% repeat-x,
+                radial-gradient(circle 7px at 50% 100%, transparent 98%, #000) 0 100% / 20px 51% repeat-x;
+}
+.slip-head { display: flex; justify-content: space-between; gap: 12px; border-bottom: 2px dashed var(--line); padding-bottom: 10px; font-family: var(--display); font-size: 14px; color: var(--ink-soft); }
+.slip h1 { font-size: 30px; font-weight: 800; color: var(--teal); }
+.slip-foot { border-top: 2px dashed var(--line); padding-top: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fig { display: flex; flex-direction: column; }
+.fig b { font-family: var(--display); font-size: 26px; font-weight: 800; color: var(--ink); line-height: 1.2; }
+.fig span { font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+
+/* ---------- the one rule: codes must match */
+.rule {
+  background: var(--teal-deep); color: #eaf6f2; border-radius: 16px; padding: 18px 20px;
+  font-family: var(--display); font-size: 19px; font-weight: 500; line-height: 1.5;
+}
+.rule strong { color: var(--led); }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.compare > div { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.cap { font-family: var(--display); font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+.phone {
+  background: var(--paper); border: 2px solid var(--line); border-radius: 26px; padding: 18px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; flex: 1;
+}
+.phone .emo { font-size: 40px; line-height: 1; }
+.phone .msg { font-family: var(--display); font-size: 13px; font-weight: 600; line-height: 1.4; }
+.code-box { border: 2px dashed var(--teal); border-radius: 12px; padding: 4px 14px; text-align: center; }
+.code-box small { display: block; font-size: 11px; color: var(--ink-soft); }
+.code-box b { font-family: var(--display); font-size: 30px; font-weight: 800; color: var(--teal); letter-spacing: 0.08em; }
+.screen {
+  background: #1d4743; color: #e9f6f2; border-radius: 14px; padding: 14px 12px;
+  display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center;
+}
+.screen .row { background: #fffdf8; color: #23403d; border-radius: 10px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; }
+.screen .row .e { font-size: 22px; }
+.screen .row .n { flex: 1; min-width: 0; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.screen .row .c { font-family: var(--display); font-weight: 800; font-size: 18px; color: #1f6e64; letter-spacing: 0.06em; }
+.screen .dim { opacity: 0.55; }
+.screen .label { font-family: var(--display); font-size: 11px; opacity: 0.8; }
+.verdict { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.verdict div { border-radius: 12px; padding: 12px 14px; font-size: 15px; line-height: 1.5; }
+.ok { background: var(--mint); }
+.no { background: var(--peach-soft); }
+.verdict b { font-family: var(--display); display: block; font-size: 16px; }
+
+/* ---------- timeline */
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.step { display: grid; grid-template-columns: 44px 1fr; gap: 14px; position: relative; padding-bottom: 22px; }
+.step:last-child { padding-bottom: 0; }
+.step::before { content: ""; position: absolute; left: 21px; top: 44px; bottom: 0; width: 2px; background: var(--line); }
+.step:last-child::before { display: none; }
+.dot {
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--paper); border: 2px solid var(--line); font-family: var(--display); font-weight: 800; font-size: 18px; color: var(--ink-soft);
+}
+.step.give .dot { background: var(--peach); border-color: var(--peach); color: #3b2416; }
+.step-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 6px; }
+.step-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.step-title h3 { font-size: 18px; font-weight: 600; }
+.when { font-size: 14px; color: var(--ink-soft); }
+.chip {
+  align-self: flex-start; font-family: var(--display); font-size: 13px; font-weight: 600;
+  background: var(--peach); color: #3b2416; border-radius: 999px; padding: 2px 12px;
+}
+.step p { color: var(--ink); }
+.step .see { color: var(--ink-soft); font-size: 15px; }
+
+/* ---------- tracker */
+.tracker { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.trow { display: grid; grid-template-columns: 28px 1fr 92px; gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
+.trow:first-child { border-top: 0; }
+.trow input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--teal); margin: 0; }
+.trow label { min-width: 0; font-weight: 600; line-height: 1.4; }
+.trow label small { display: block; font-weight: 400; font-size: 13px; color: var(--ink-soft); }
+.trow input[type="text"] {
+  width: 100%; font-family: var(--display); font-size: 20px; font-weight: 800; text-align: center; letter-spacing: 0.08em;
+  border: 2px dashed var(--line); border-radius: 10px; padding: 4px; background: var(--bg); color: var(--ink);
+}
+.trow input[type="text"]:focus, .trow input[type="checkbox"]:focus-visible, button:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.trow.done label { text-decoration: line-through; color: var(--ink-soft); }
+.tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tools p { font-size: 14px; color: var(--ink-soft); }
+button.clear {
+  font-family: var(--display); font-size: 14px; color: var(--ink); background: transparent;
+  border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; cursor: pointer;
+}
+
+/* ---------- FAQ */
+.faq { display: flex; flex-direction: column; gap: 10px; }
+details { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; }
+summary { font-family: var(--display); font-weight: 600; cursor: pointer; line-height: 1.45; }
+details p { margin-top: 8px; color: var(--ink); }
+.warn { border-left: 4px solid var(--bad); padding: 10px 14px; background: var(--paper); border-radius: 0 12px 12px 0; }
+.warn b { color: var(--bad); font-family: var(--display); }
+
+footer { display: flex; flex-direction: column; gap: 10px; color: var(--ink-soft); font-size: 15px; border-top: 2px dashed var(--line); padding-top: 18px; }
+footer .hot { font-family: var(--display); font-weight: 600; color: var(--teal); font-size: 17px; }
+
+@media (max-width: 420px) {
+  .compare, .verdict { grid-template-columns: 1fr; }
+  .slip h1 { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<main class="wrap">
+
+  <!-- hero -->
+  <div class="slip">
+    <div class="slip-head"><span>คิวหน้าห้องจิตแพทย์</span><span>สำหรับผู้ช่วย</span></div>
+    <h1>คู่มือผู้ช่วยแจกขนม</h1>
+    <p>หน้าที่ของคุณมีอย่างเดียว คือ <b>ให้ขนมถูกคน</b> ในเกมอุ่นเครื่อง 5 นาทีนี้ คนที่ชนะระหว่างเกมจะได้ขนมก่อน และตอนจบทุกคนได้ขนม</p>
+    <div class="slip-foot">
+      <div class="fig"><b class="num">67</b><span>ชิ้น ให้ทุกคนตอนจบ</span></div>
+      <div class="fig"><b class="num">+4–5</b><span>ชิ้นสำรอง สำหรับผู้ชนะ</span></div>
+      <div class="fig"><b class="num">3</b><span>จังหวะที่ต้องแจก</span></div>
+    </div>
+  </div>
+
+  <!-- the rule -->
+  <section aria-labelledby="h-rule">
+    <span class="eyebrow">กฎข้อเดียวที่ต้องจำ</span>
+    <h2 id="h-rule">เทียบรหัส 3 หลัก ก่อนให้ขนมทุกครั้ง</h2>
+    <p class="rule">รหัสบน<strong>มือถือของผู้ชนะ</strong> ต้องตรงกับรหัสบน<strong>จอใหญ่หน้าห้อง</strong> ถึงจะให้ขนม</p>
+    <div class="compare">
+      <div>
+        <span class="cap">มือถือของผู้ชนะ</span>
+        <div class="phone" aria-label="ตัวอย่างหน้าจอมือถือผู้ชนะ">
+          <div class="emo">🐼</div>
+          <div class="msg">คุณได้พบหมอแล้ว! รับรางวัลหน้าห้อง</div>
+          <div class="code-box"><small>รหัสรับรางวัล</small><b class="num">572</b></div>
+        </div>
+      </div>
+      <div>
+        <span class="cap">จอใหญ่ (ด้านขวา ช่วงห้องรอ)</span>
+        <div class="screen" aria-label="ตัวอย่างรายชื่อผู้ชนะบนจอใหญ่">
+          <span class="label">รายชื่อผู้ได้รางวัล</span>
+          <div class="row"><span class="e">🐼</span><span class="n">น้องแพนด้า</span><span class="c num">572</span></div>
+          <div class="row dim"><span class="e">🦊</span><span class="n">ฟ็อกซ์ · #2,837</span><span class="c num">817</span></div>
+          <div class="row dim"><span class="e">🌻</span><span class="n">ทานตะวัน · #1,762</span><span class="c num">526</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="lead">รูปด้านบนเป็นตัวอย่าง รหัสจริงสุ่มใหม่ทุกเกม</p>
+    <div class="verdict">
+      <div class="ok"><b>ตรงกัน</b>ให้ขนม 1 ชิ้น แล้วติ๊กในรายการด้านล่าง</div>
+      <div class="no"><b>ไม่ตรง หรือไม่มีรหัส</b>ยังไม่ให้ ขอให้เขารีเฟรชหน้าเว็บก่อน (รหัสจะกลับมาเอง)</div>
+    </div>
+  </section>
+
+  <!-- timeline -->
+  <section aria-labelledby="h-steps">
+    <span class="eyebrow">ลำดับในห้องเรียน</span>
+    <h2 id="h-steps">เกมเดินไปตามนี้ ผู้นำเสนอเป็นคนกดเปลี่ยนขั้น</h2>
+    <ol class="steps">
+      <li class="step">
+        <span class="dot num">1</span>
+        <div class="step-body">
+          <div class="step-title"><h3>ทุกคนสแกน QR เข้าเกม</h3><span class="when">~1 นาที</span></div>
+          <p>ยังไม่ต้องทำอะไร เตรียมขนมให้พร้อม แยกชิ้นสำรอง 4–5 ชิ้นไว้ใกล้มือ</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="dot num">2</span>
+        <div class="step-body">
+          <div class="step-title"><h3>แย่งกดคิว</h3><span class="when">10 วินาที</span></div>
+          <p>ทั้งห้องรัวกดปุ่มบนมือถือ คนแรกที่กดถึงระบบได้คิวเดียวที่มี</p>
+        </div>
+      </li>
+      <li class="step give">
+        <span class="dot num">3</span>
+        <div class="step-body">
+          <div class="step-title"><h3>ประกาศผู้ชนะรอบกด</h3><span class="when">~30 วินาที</span></div>
+          <span class="chip">แจกชิ้นที่ 1</span>
+          <p>จอใหญ่โชว์อีโมจิ ชื่อเล่น และรหัส 3 หลักของผู้ชนะตัวใหญ่ ๆ ให้ผู้ชนะยกมือ เดินไปเทียบรหัสแล้วให้ขนม</p>
+        </div>
+      </li>
+      <li class="step give">
+        <span class="dot num">4</span>
+        <div class="step-body">
+          <div class="step-title"><h3>ห้องรอ</h3><span class="when">90 วินาที</span></div>
+          <span class="chip">แจกชิ้นที่ 2 และ 3</span>
+          <p>ที่วินาทีที่ 30 และ 60 จอใหญ่จะขึ้น <b>"มีผู้ยกเลิกนัด! เชิญคิวที่ …"</b> พร้อมเลขคิว ชื่อเล่น และรหัส คนที่ถูกเรียกคือผู้โชคดี เทียบรหัสแล้วให้ขนม</p>
+          <p class="see">ผู้นำเสนออาจกดสุ่มเพิ่มอีกคน ให้ใช้ขนมสำรอง รายชื่อผู้ชนะทั้งหมดพร้อมรหัสจะอยู่ด้านขวาของจอตลอดช่วงนี้</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="dot num">5</span>
+        <div class="step-body">
+          <div class="step-title"><h3>เปิดตัวเลขจริง</h3><span class="when">~1 นาที</span></div>
+          <p>ผู้นำเสนอพูดเรื่องจำนวนจิตแพทย์ในไทย ช่วงนี้ไม่ต้องแจกอะไร เตรียมขนมสำหรับทุกคนให้พร้อมส่งต่อตามแถว</p>
+        </div>
+      </li>
+      <li class="step give">
+        <span class="dot num">6</span>
+        <div class="step-body">
+          <div class="step-title"><h3>ปิดท้าย</h3><span class="when">ตอนจบ</span></div>
+          <span class="chip">แจกทุกคน</span>
+          <p>จอใหญ่ขึ้น "ระหว่างรอหมอ… เพื่อนดูแลกันได้" มือถือทุกเครื่องขึ้น "รับขนมจากเพื่อนได้เลย" ให้ส่งขนมต่อกันไปตามแถว ไม่ต้องเทียบรหัส</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <div class="warn" role="note">
+    <b>แจกให้ผู้ชนะให้เสร็จก่อนจบห้องรอ</b>
+    <p>พอเข้าขั้นที่ 5 รายชื่อและรหัสผู้ชนะจะหายจากจอใหญ่ และมือถือจะเปลี่ยนเป็นหน้า "ดูที่จอหน้าห้องเลย" ถ้าผู้ชนะยังไม่ได้รับ ให้ดูรหัสที่จดไว้ในรายการด้านล่างแทน</p>
+  </div>
+
+  <!-- tracker -->
+  <section aria-labelledby="h-track">
+    <span class="eyebrow">ใช้ระหว่างเกม</span>
+    <h2 id="h-track">รายการแจก</h2>
+    <p class="lead">จดรหัสจากจอใหญ่ทันทีที่ประกาศ แล้วติ๊กเมื่อให้ขนมแล้ว ข้อมูลเก็บไว้ในเครื่องของคุณเท่านั้น</p>
+    <div class="tracker" id="tracker">
+      <div class="trow">
+        <input type="checkbox" id="give-race">
+        <label for="give-race">ผู้ชนะรอบกด<small>ขั้นที่ 3</small></label>
+        <input type="text" id="code-race" inputmode="numeric" maxlength="3" placeholder="รหัส" aria-label="รหัสผู้ชนะรอบกด">
+      </div>
+      <div class="trow">
+        <input type="checkbox" id="give-draw1">
+        <label for="give-draw1">ยกเลิกนัด ครั้งที่ 1<small>ห้องรอ วินาทีที่ 30</small></label>
+        <input type="text" id="code-draw1" inputmode="numeric" maxlength="3" placeholder="รหัส" aria-label="รหัสยกเลิกนัดครั้งที่ 1">
+      </div>
+      <div class="trow">
+        <input type="checkbox" id="give-draw2">
+        <label for="give-draw2">ยกเลิกนัด ครั้งที่ 2<small>ห้องรอ วินาทีที่ 60</small></label>
+        <input type="text" id="code-draw2" inputmode="numeric" maxlength="3" placeholder="รหัส" aria-label="รหัสยกเลิกนัดครั้งที่ 2">
+      </div>
+      <div class="trow">
+        <input type="checkbox" id="give-extra">
+        <label for="give-extra">สุ่มเพิ่ม (ถ้ามี)<small>ใช้ขนมสำรอง</small></label>
+        <input type="text" id="code-extra" inputmode="numeric" maxlength="3" placeholder="รหัส" aria-label="รหัสผู้ได้สุ่มเพิ่ม">
+      </div>
+      <div class="trow">
+        <input type="checkbox" id="give-all">
+        <label for="give-all">ทุกคนได้ขนมแล้ว<small>ขั้นที่ 6 · ไม่ต้องเทียบรหัส</small></label>
+        <span></span>
+      </div>
+    </div>
+    <div class="tools">
+      <p>ก่อนเกมรอบใหม่ กดล้างรายการ</p>
+      <button type="button" class="clear" id="clear">ล้างรายการ</button>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section aria-labelledby="h-faq">
+    <span class="eyebrow">ถ้าเจอแบบนี้</span>
+    <h2 id="h-faq">ปัญหาที่อาจเจอ</h2>
+    <div class="faq">
+      <details>
+        <summary>ผู้ชนะบอกว่าชนะ แต่บนมือถือไม่เห็นรหัส</summary>
+        <p>ให้รีเฟรชหน้าเว็บ ระบบจำผู้เล่นไว้ รหัสเดิมจะกลับมา ถ้ามือถือแบตหมด ให้ถามชื่อเล่นกับอีโมจิ แล้วเทียบกับรายชื่อบนจอใหญ่ด้านขวา</p>
+      </details>
+      <details>
+        <summary>มือถือขึ้นแถบเหลือง "กำลังเชื่อมต่อใหม่…"</summary>
+        <p>เน็ตหลุดชั่วคราว รอสักครู่ระบบจะต่อใหม่เอง ถ้าไม่หายให้รีเฟรช ข้อมูลไม่หาย</p>
+      </details>
+      <details>
+        <summary>มีสองคนอ้างว่าได้รหัสเดียวกัน</summary>
+        <p>เป็นไปไม่ได้ เพราะรหัสไม่ซ้ำกันในเกมเดียว ขอดูหน้าจอมือถือของทั้งสองคน คนที่รหัสตรงกับจอใหญ่คือผู้ชนะ</p>
+      </details>
+      <details>
+        <summary>ขนมสำรองหมด แต่ผู้นำเสนอกดสุ่มเพิ่ม</summary>
+        <p>ส่งสัญญาณให้ผู้นำเสนอรู้ แล้วให้ผู้โชคดีคนนั้นได้ขนมก่อนในรอบแจกทุกคนตอนจบ</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    <p>ระหว่างแจก ห้ามเรียกชื่อจริง ห้ามทักหรือแซวเรื่องสภาพจิตใจของใคร เกมนี้ตัดสินด้วยความเร็วและโชคล้วน ๆ</p>
+    <p>ข้อความท้ายเกมบนจอ: <span class="hot">สายด่วนสุขภาพจิต 1323</span></p>
+  </footer>
+</main>
+
+<script>
+/* Per-viewer tracker: remembers ticks + codes in this browser only (localStorage, guarded). */
+(function () {
+  const KEY = "helper-tracker-v1";
+  const fields = Array.from(document.querySelectorAll("#tracker input"));
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (_) { saved = {}; }
+
+  function paint() {
+    document.querySelectorAll("#tracker .trow").forEach((row) => {
+      const box = row.querySelector('input[type="checkbox"]');
+      row.classList.toggle("done", box.checked);
+    });
+  }
+  function save() {
+    const data = {};
+    fields.forEach((f) => { data[f.id] = f.type === "checkbox" ? f.checked : f.value; });
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (_) {}
+    paint();
+  }
+
+  fields.forEach((f) => {
+    if (f.id in saved) {
+      if (f.type === "checkbox") f.checked = !!saved[f.id];
+      else f.value = String(saved[f.id] || "");
+    }
+    f.addEventListener(f.type === "checkbox" ? "change" : "input", () => {
+      if (f.type === "text") f.value = f.value.replace(/\D/g, "").slice(0, 3);
+      save();
+    });
+  });
+  paint();
+
+  const clearBtn = document.getElementById("clear");
+  let armed = false;
+  clearBtn.addEventListener("click", () => {
+    if (!armed) {
+      armed = true;
+      clearBtn.textContent = "กดอีกครั้งเพื่อยืนยัน";
+      setTimeout(() => { armed = false; clearBtn.textContent = "ล้างรายการ"; }, 3000);
+      return;
+    }
+    armed = false;
+    clearBtn.textContent = "ล้างรายการ";
+    fields.forEach((f) => { if (f.type === "checkbox") f.checked = false; else f.value = ""; });
+    save();
+  });
+})();
+</script>
