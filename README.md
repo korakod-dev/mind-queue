@@ -31,20 +31,20 @@ The presenter presses start once; every phase after that runs on a timer. The bi
 
 ### Phones
 
-| Join | Patient card | Race | Queue position |
+| Join | Patient card | Race | Watch phase: "👆 look at the big screen" |
 |---|---|---|---|
-| ![Join](docs/screenshots/phone-join.jpg) | ![Card](docs/screenshots/phone-card.jpg) | ![Race](docs/screenshots/phone-tap.jpg) | ![Queue](docs/screenshots/phone-queue.jpg) |
-| **Gamble** | **Not called** | **Winner** | **Guess** |
+| ![Join](docs/screenshots/phone-join.jpg) | ![Card](docs/screenshots/phone-card.jpg) | ![Race](docs/screenshots/phone-tap.jpg) | ![Look up](docs/screenshots/phone-queue.jpg) |
+| **Gamble (input moment)** | **Not called + summary line** | **Winner** | **Guess** |
 | ![Gamble](docs/screenshots/phone-gamble.jpg) | ![Not called](docs/screenshots/phone-call.jpg) | ![Winner](docs/screenshots/phone-win.jpg) | ![Guess](docs/screenshots/phone-guess.jpg) |
-| **End** | | | |
-| ![End](docs/screenshots/phone-end.jpg) | | | |
+| **Zoom + summary line** | **End** | | |
+| ![Zoom](docs/screenshots/phone-zoom.jpg) | ![End](docs/screenshots/phone-end.jpg) | | |
 
 Screenshots come from a local game with 45 bot players. The big screen is shown at 1600×900; on a 1080p projector everything scales up.
 
 ### Videos
 
-- [`media/how-to-play.mp4`](media/how-to-play.mp4): how to play from start to finish: a recorded live game (big screen + phone side by side) with captions; long phases are sped up (1:53).
-- [`media/classroom-atmosphere.mp4`](media/classroom-atmosphere.mp4): animated preview of the classroom for the helper and team, with the recorded big screen on the projector and student reactions per phase (1:53, illustration, not real footage).
+- [`media/how-to-play.mp4`](media/how-to-play.mp4): how to play from start to finish: a recorded live game (big screen + phone side by side) with captions; long phases are sped up (2:01).
+- [`media/classroom-atmosphere.mp4`](media/classroom-atmosphere.mp4): animated preview of the classroom for the helper and team, with the recorded big screen on the projector and student reactions per phase (2:01, illustration, not real footage).
 
 Both videos use procedurally generated background music, so there are no copyright issues.
 
