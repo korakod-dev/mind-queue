@@ -127,17 +127,143 @@ body {
   opacity: 0.45;
 }
 
-/* ---------------------------------------------------------------- countdown + tap race */
+/* ---------------------------------------------------------------- patient card (INTRO) */
 
-.countdown {
-  font-size: 140px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--teal);
+.big-msg.small {
+  font-size: 21px;
 }
 
-.countdown.pop {
-  animation: pop 0.5s ease-out;
+.card-flip {
+  position: relative;
+  width: min(78vw, 300px);
+  aspect-ratio: 3 / 4;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: transform 0.9s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.card-flip.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-flip .face {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.card-flip .front {
+  background: repeating-linear-gradient(45deg, var(--teal) 0 14px, var(--teal-strong) 14px 28px);
+  color: #fff;
+}
+
+.card-flip .back {
+  transform: rotateY(180deg);
+  background: #fffdf8;
+  color: #23403d;
+  border: 6px solid var(--line);
+}
+
+.card-flip .back[data-u="3"] {
+  border-color: #e0362a;
+}
+.card-flip .back[data-u="2"] {
+  border-color: #f2c230;
+}
+.card-flip .back[data-u="1"] {
+  border-color: #35b34f;
+}
+
+.c-head {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.c-q {
+  font-size: 110px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.c-who {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.c-icon {
+  font-size: 90px;
+  line-height: 1;
+}
+
+.c-label {
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.c-note {
+  font-size: 13px;
+  color: #5b7471;
+}
+
+/* ---------------------------------------------------------------- race */
+
+.tap-btn {
+  width: min(82vw, 360px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25), inset 0 -8px 0 rgba(0, 0, 0, 0.15);
+  transition: transform 0.06s, background 0.08s;
+}
+
+.tap-btn.red {
+  background: radial-gradient(circle at 35% 30%, #ff8a7a, #e0362a 60%, #9b1d14);
+}
+
+.tap-btn.green {
+  background: radial-gradient(circle at 35% 30%, #a6f5b0, #22b04b 60%, #12702c);
+  font-size: 64px;
+}
+
+.tap-btn.over {
+  background: #8a9a98;
+}
+
+.tap-btn:active,
+.tap-btn.hit {
+  transform: scale(0.94);
+}
+
+.tap-meta {
+  font-size: 19px;
+  font-weight: 600;
+  min-height: 1.5em;
+  margin: 0;
+}
+
+.foul-msg {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  background: #c2412d;
+  border-radius: 14px;
+  padding: 8px 16px;
+  animation: pop 0.4s ease-out;
 }
 
 @keyframes pop {
@@ -151,41 +277,174 @@ body {
   }
 }
 
-.tap-btn {
-  width: min(82vw, 360px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #5fc4b6, var(--teal) 55%, var(--teal-strong));
-  color: #fff;
-  font-size: 30px;
-  font-weight: 800;
-  line-height: 1.3;
-  padding: 24px;
-  box-shadow: 0 16px 40px rgba(46, 140, 128, 0.45), inset 0 -8px 0 rgba(0, 0, 0, 0.12);
-  transition: transform 0.06s;
+/* ---------------------------------------------------------------- queue */
+
+#s-queue {
+  gap: 10px;
 }
 
-.tap-btn:active,
-.tap-btn.hit {
-  transform: scale(0.94);
+.urg-pill {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 3px solid var(--line);
 }
 
-.tap-btn:disabled {
-  filter: grayscale(0.7);
-  opacity: 0.55;
+.urg-pill[data-u="3"] {
+  border-color: #e0362a;
+}
+.urg-pill[data-u="2"] {
+  border-color: #f2c230;
+}
+.urg-pill[data-u="1"] {
+  border-color: #35b34f;
 }
 
-.tap-meta {
+.q-label {
   font-size: 20px;
+  color: var(--ink-soft);
   font-weight: 600;
+  margin-top: 6px;
+}
+
+.q-pos {
+  font-size: 120px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--teal-strong);
+}
+
+.q-pos.up {
+  animation: pos-up 0.8s cubic-bezier(0.2, 1.4, 0.4, 1);
+  color: #22963f;
+}
+
+.q-pos.down {
+  animation: pos-down 0.8s ease-out;
+  color: #c2412d;
+}
+
+@keyframes pos-up {
+  from {
+    transform: translateY(60px) scale(0.6);
+    opacity: 0;
+  }
+}
+
+@keyframes pos-down {
+  0%,
+  100% {
+    transform: none;
+  }
+  20%,
+  60% {
+    transform: translateX(-12px);
+  }
+  40%,
+  80% {
+    transform: translateX(12px);
+  }
+}
+
+.q-move {
+  font-size: 20px;
+  font-weight: 800;
+  min-height: 1.5em;
+}
+
+.q-move.up {
+  color: #22963f;
+}
+
+.q-move.down {
+  color: #c2412d;
+}
+
+.q-info {
+  font-size: 16px;
+  color: var(--ink-soft);
+  min-height: 1.5em;
+}
+
+.q-event {
+  font-size: 22px;
+  font-weight: 700;
+  white-space: pre-line;
+  min-height: 1.5em;
+}
+
+.q-event.drum {
+  animation: throb 0.5s ease-in-out infinite;
+}
+
+@keyframes throb {
+  50% {
+    transform: scale(0.95);
+  }
+}
+
+.gamble {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.g-btn {
+  min-height: 72px;
+  border-radius: 16px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: var(--shadow);
+}
+
+.g-btn.move {
+  background: #f2a230;
+}
+
+.g-btn.stay {
+  background: var(--teal);
+}
+
+/* Reaction bar */
+.reacts {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.reacts button {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  font-size: 30px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.reacts button.hit {
+  animation: pop 0.3s ease-out;
 }
 
 /* ---------------------------------------------------------------- win */
+
+.screen.win {
+  background: radial-gradient(circle at 50% 30%, #fff3c4, transparent 70%);
+}
 
 .win-emoji {
   font-size: 96px;
   line-height: 1;
   animation: pop 0.6s ease-out;
+}
+
+.soft.strong {
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .claim {
@@ -208,166 +467,28 @@ body {
   line-height: 1.1;
 }
 
-/* ---------------------------------------------------------------- queue ticket slip */
+/* ---------------------------------------------------------------- guess */
 
-.ticket {
-  position: relative;
-  width: min(100%, 320px);
-  background: #fffdf8;
-  color: #23403d; /* paper stays paper in dark mode */
-  border-radius: 10px;
-  padding: 18px 20px 14px;
-  box-shadow: var(--shadow);
-  /* perforated top/bottom edges */
-  -webkit-mask: radial-gradient(circle 6px at 50% 0, transparent 98%, #000) 0 0 / 18px 51% repeat-x,
-    radial-gradient(circle 6px at 50% 100%, transparent 98%, #000) 0 100% / 18px 51% repeat-x;
-  mask: radial-gradient(circle 6px at 50% 0, transparent 98%, #000) 0 0 / 18px 51% repeat-x,
-    radial-gradient(circle 6px at 50% 100%, transparent 98%, #000) 0 100% / 18px 51% repeat-x;
-}
-
-.ticket .t-head {
-  font-size: 14px;
-  letter-spacing: 0.04em;
-  color: #5b7471;
-  border-bottom: 2px dashed #e1d9cc;
-  padding-bottom: 8px;
-}
-
-.ticket .t-num {
-  font-size: 64px;
-  font-weight: 800;
-  line-height: 1.15;
-  color: #1f6e64;
-  margin: 6px 0 2px;
-}
-
-.ticket .t-who {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.ticket .t-foot {
-  font-size: 14px;
-  color: #5b7471;
-  border-top: 2px dashed #e1d9cc;
-  margin-top: 10px;
-  padding-top: 8px;
-}
-
-.ticket .t-bar {
-  height: 26px;
-  margin-top: 8px;
-  background: repeating-linear-gradient(90deg, #23403d 0 2px, transparent 2px 4px, #23403d 4px 7px, transparent 7px 9px,
-      #23403d 9px 10px, transparent 10px 13px);
-  opacity: 0.75;
-}
-
-.ticket.small {
-  padding: 10px 16px 8px;
-}
-
-.ticket.small .t-num {
-  font-size: 40px;
-  margin: 2px 0 0;
-}
-
-.ticket.small .t-bar,
-.ticket.small .t-foot {
-  display: none;
-}
-
-/* ---------------------------------------------------------------- waiting room */
-
-#s-waiting {
-  justify-content: flex-start;
-  gap: 12px;
-}
-
-.calling {
-  font-size: 16px;
-  color: var(--ink-soft);
-}
-
-.calling b {
-  color: var(--teal-strong);
-  font-size: 22px;
-}
-
-.tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
+.guess-opts {
   width: 100%;
-  background: var(--mint);
-  padding: 5px;
-  border-radius: 14px;
-}
-
-.tabs button {
-  min-height: 48px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ink-soft);
-}
-
-.tabs button[aria-selected="true"] {
-  background: var(--surface);
-  color: var(--teal-strong);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.play-area {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  min-height: 300px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  overflow: hidden;
-  touch-action: none; /* bubble taps must not scroll/zoom */
-}
-
-#bubbles {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.pop-count {
-  position: absolute;
-  top: 10px;
-  right: 14px;
-  font-weight: 700;
-  color: var(--ink-soft);
-  pointer-events: none;
-}
-
-.breathe {
-  position: absolute;
-  inset: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.breathe .circle {
-  width: 70%;
-  max-width: 280px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--mint) 0%, var(--teal) 100%);
-  opacity: 0.85;
-  will-change: transform;
-}
-
-.breathe .word {
-  position: absolute;
-  font-size: 26px;
+.g-opt {
+  min-height: 64px;
+  border-radius: 16px;
+  font-size: 22px;
   font-weight: 700;
-  color: var(--ink);
+  background: var(--surface);
+  border: 3px solid var(--line);
+}
+
+.g-opt[aria-pressed="true"] {
+  border-color: var(--teal);
+  background: var(--mint);
+  color: var(--teal-strong);
 }
 
 /* ---------------------------------------------------------------- end */
@@ -376,6 +497,26 @@ body {
   margin-top: 8px;
   font-weight: 700;
   color: var(--teal-strong);
+}
+
+.flash {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.flash.go {
+  animation: flash 0.55s ease-out forwards;
+}
+
+@keyframes flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 /* ---------------------------------------------------------------- overlays */

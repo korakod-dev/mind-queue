@@ -15,6 +15,7 @@
     <!-- Text content comes from STR (js/strings.js) via data-str. -->
     <div class="banner" id="banner" data-str="reconnecting" hidden></div>
     <canvas id="confetti" hidden></canvas>
+    <div class="flash" id="flash" hidden></div>
 
     <!-- first connect -->
     <section class="screen" id="s-boot">
@@ -41,63 +42,88 @@
       <p class="big-msg" data-str="waitForHost"></p>
     </section>
 
-    <!-- TAP_COUNTDOWN + TAP_RACE -->
-    <section class="screen" id="s-tap" hidden>
-      <p class="tap-meta" id="tap-top" data-str="getReady"></p>
-      <div class="countdown num" id="countdown"></div>
-      <button class="tap-btn" id="tap-btn" data-str="tapButton" disabled></button>
-      <p class="tap-meta num" id="tap-count"></p>
+    <!-- INTRO: patient card flips over -->
+    <section class="screen" id="s-intro" hidden>
+      <div class="card-flip" id="card-flip">
+        <div class="face front">
+          <div class="c-head" data-str="cardHead"></div>
+          <div class="c-q">?</div>
+        </div>
+        <div class="face back" id="card-back">
+          <div class="c-head" data-str="cardHead"></div>
+          <div class="c-who"><span data-you="emoji"></span> <span data-you="nickname"></span></div>
+          <div class="c-icon" id="card-icon"></div>
+          <div class="c-label" id="card-label"></div>
+          <div class="c-note" data-str="cardNote"></div>
+        </div>
+      </div>
+      <p class="big-msg small" data-str="introNext"></p>
     </section>
 
-    <!-- race or draw winner -->
-    <section class="screen" id="s-win" hidden>
+    <!-- RACE -->
+    <section class="screen" id="s-tap" hidden>
+      <p class="tap-meta" id="tap-top"></p>
+      <button class="tap-btn red" id="tap-btn"></button>
+      <p class="tap-meta num" id="tap-count"></p>
+      <p class="foul-msg" id="foul-msg" data-str="foulPhone" hidden></p>
+    </section>
+
+    <!-- LINEUP / EVENTS / CALL (not the winner) -->
+    <section class="screen" id="s-queue" hidden>
+      <div class="urg-pill" id="q-urg"></div>
+      <div class="q-label" data-str="youPos"></div>
+      <div class="q-pos num" id="q-pos"></div>
+      <div class="q-move" id="q-move"></div>
+      <div class="q-info num" id="q-info"></div>
+      <div class="q-event" id="q-event"></div>
+      <div class="gamble" id="gamble" hidden>
+        <button class="g-btn move" id="g-move" data-str="gambleMove"></button>
+        <button class="g-btn stay" id="g-stay" data-str="gambleStay"></button>
+      </div>
+      <div class="reacts"></div>
+    </section>
+
+    <!-- CALL winner (and the winner's END screen shows the code too) -->
+    <section class="screen win" id="s-win" hidden>
       <div class="win-emoji" data-you="emoji"></div>
-      <p class="big-msg" id="win-msg"></p>
+      <p class="big-msg" data-str="youWin"></p>
+      <p class="soft strong" data-str="youWinSub"></p>
       <div class="claim">
         <div class="label" data-str="claimCodeLabel"></div>
         <div class="code num" id="win-code"></div>
       </div>
+      <div class="reacts"></div>
     </section>
 
-    <!-- TAP_RESULT for everyone else -->
-    <section class="screen" id="s-ticket" hidden>
-      <div class="ticket" id="ticket-big"></div>
+    <!-- GUESS -->
+    <section class="screen" id="s-guess" hidden>
+      <p class="big-msg small" id="guess-q"></p>
+      <div class="guess-opts" id="guess-opts"></div>
+      <p class="soft" id="guess-note"></p>
+      <p class="tap-meta num" id="guess-left"></p>
     </section>
 
-    <!-- WAITING_ROOM -->
-    <section class="screen" id="s-waiting" hidden>
-      <div class="ticket small" id="ticket-small"></div>
-      <div class="calling"><span data-str="nowCalling"></span> <b class="num" id="calling-num"></b></div>
-      <div class="tabs" role="tablist">
-        <button role="tab" id="tab-bubble" aria-selected="true" data-str="bubbleTab"></button>
-        <button role="tab" id="tab-breathe" aria-selected="false" data-str="breatheTab"></button>
-      </div>
-      <div class="play-area">
-        <canvas id="bubbles"></canvas>
-        <div class="pop-count num" id="pop-count"></div>
-        <div class="breathe" id="breathe" hidden>
-          <div class="circle" id="breathe-circle"></div>
-          <div class="word" id="breathe-word"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- REVEAL -->
+    <!-- ZOOM -->
     <section class="screen" id="s-reveal" hidden>
       <p class="big-msg" data-str="lookAtScreen"></p>
+      <div class="reacts"></div>
     </section>
 
     <!-- END -->
     <section class="screen" id="s-end" hidden>
       <div class="win-emoji">🍬</div>
       <p class="big-msg" data-str="endPhone"></p>
+      <p class="soft" data-str="endAsk"></p>
+      <div class="claim" id="end-claim" hidden>
+        <div class="label" data-str="claimCodeLabel"></div>
+        <div class="code num" id="end-code"></div>
+      </div>
       <p class="hotline" data-str="hotline"></p>
     </section>
 
     <script src="/js/strings.js"></script>
     <script src="/js/net.js"></script>
     <script src="/js/confetti.js"></script>
-    <script src="/js/bubbles.js"></script>
     <script src="/js/player.js"></script>
   </body>
 </html>

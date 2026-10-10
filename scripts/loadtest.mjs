@@ -7,21 +7,23 @@
  *   baseUrl defaults to http://localhost:8790. HOST_KEY defaults to the value in .dev.vars.
  *   ⚠ The test RESETS the room first — never run it against production during class.
  *
- * What it does
- *  - joins N players, host drives every phase (WAITING_ROOM runs its real 90 s)
- *  - every player taps ~10/s during TAP_RACE, batching cumulative counts every 500 ms
- *    (first tap sent immediately), exactly like the real client
- *  - one "early bird" sends a tap before startAt and then stops (must be ignored)
- *  - ~10 % of players disconnect and reconnect (same playerId) mid-race / mid-waiting-room
- *  - pops bubbles during WAITING_ROOM; host also triggers one manual draw
+ * What it does (the whole timeline runs for real, ~2:15)
+ *  - joins N players; the host presses start once
+ *  - RACE: most players start tapping 150–900 ms after the green light at ~10/s, batching
+ *    cumulative counts every 500 ms (first press after green sent immediately, like the real
+ *    client); 2 "early birds" press before the green light (false start); ~10 % never tap
+ *  - ~10 % of players disconnect and reconnect (same playerId) during RACE and EVENTS
+ *  - EVENTS: about half the players answer "move" to the gamble
+ *  - GUESS: every player picks a random answer; players send a few reactions
  *
  * Asserts
- *  - exactly one tap-race winner; early tap ignored
- *  - every non-winner has a ticket, all tickets unique and in range
- *  - draws never pick the race winner and never repeat; claim codes unique
- *  - every client ends in END with the same winners list as the host
- *  - server tap/pop totals equal the sum of per-player acknowledged counts
- *  - roomsNeeded matches the formula
+ *  - LINEUP queue is a permutation of all players; false starters are at the very back,
+ *    non-tappers right before them
+ *  - all four events fire; the gamble resolves with lucky + unlucky = movers = players who chose move
+ *  - exactly one winner: the host's winner, the only phone with won=true, and queue #1
+ *  - every client ends in END
+ *  - server tap total equals the sum of per-player acknowledged taps
+ *  - ZOOM guess counts equal the answers sent; roomsNeeded matches the formula
  * Prints broadcast latency (server send time → client receive, clock-offset corrected).
  */
 import { readFileSync } from "node:fs";
@@ -81,11 +83,10 @@ class SimClient {
     this.closedByUs = false;
     this.unexpectedCloses = 0;
     this.reconnects = 0;
-    // game-side counters (cumulative, like the real client)
     this.localTaps = 0;
     this.sentTaps = 0;
-    this.localPops = 0;
-    this.sentPops = 0;
+    /** Snapshots seen per phase (last one kept). */
+    this.byPhase = {};
   }
 
   serverNow() {
@@ -120,13 +121,11 @@ class SimClient {
         if (msg.type === "state") {
           if (this.samples.length >= 3) latency.state.push(recv + this.offset - msg.serverNow);
           this.snap = msg.snapshot;
+          this.byPhase[this.snap.phase] = this.snap;
           const you = this.snap.you;
           if (you) {
-            // reconcile with the server's acknowledged counts (same logic as player.js)
             this.localTaps = Math.max(this.localTaps, you.taps);
             this.sentTaps = Math.max(Math.min(this.sentTaps, this.localTaps), you.taps);
-            this.localPops = Math.max(this.localPops, you.pops);
-            this.sentPops = Math.max(Math.min(this.sentPops, this.localPops), you.pops);
           }
           if (!gotState) {
             gotState = true;
@@ -145,7 +144,6 @@ class SimClient {
         clearInterval(this.pingTimer);
         if (!this.closedByUs) {
           this.unexpectedCloses++;
-          // behave like the real client: reconnect with backoff
           setTimeout(() => this.connect().catch(() => {}), rand(300, 1500));
         }
       });
@@ -185,235 +183,181 @@ class SimClient {
     }
   }
 
-  // ---- gameplay
-
   sendTaps() {
     if (this.localTaps > this.sentTaps && this.send({ type: "taps", count: this.localTaps })) this.sentTaps = this.localTaps;
   }
 
-  /** ~10 taps/s between startAt and endAt; batch every 500 ms; first tap immediately. */
-  async race(startAt, endAt) {
-    while (this.serverNow() < startAt) await sleep(5);
-    await sleep(rand(0, 300)); // human reaction time
+  /** Taps ~10/s from goAt + reaction until raceEndAt; first press sent at once, then 500 ms batches. */
+  async race(goAt, raceEndAt) {
+    while (this.serverNow() < goAt) await sleep(5);
+    await sleep(rand(150, 900));
     let first = true;
     let lastBatch = Date.now();
-    while (this.serverNow() < endAt) {
+    while (this.serverNow() < raceEndAt) {
       this.localTaps++;
       if (first) {
-        first = false;
         this.sendTaps();
-        lastBatch = Date.now();
+        first = false;
       } else if (Date.now() - lastBatch >= 500) {
         this.sendTaps();
         lastBatch = Date.now();
       }
       await sleep(rand(70, 130));
     }
-    this.sendTaps(); // final batch (server accepts a short grace period)
-    await sleep(600);
+    await sleep(100);
     this.sendTaps();
   }
 
-  /** Pop ~2 bubbles/s, send cumulative count every 2 s, until `until()` is true. */
-  async popBubbles(until) {
-    let lastSend = Date.now();
-    while (!until()) {
-      if (Math.random() < 0.6) this.localPops++;
-      if (Date.now() - lastSend >= 2000) {
-        if (this.localPops > this.sentPops && this.send({ type: "pops", count: this.localPops })) this.sentPops = this.localPops;
-        lastSend = Date.now();
-      }
-      await sleep(rand(250, 400));
-    }
-    if (this.localPops > this.sentPops && this.send({ type: "pops", count: this.localPops })) this.sentPops = this.localPops;
+  /** False start: one press 1 s before the green light. */
+  async earlyBird(goAt) {
+    while (this.serverNow() < goAt - 1000) await sleep(5);
+    this.localTaps++;
+    this.sendTaps();
   }
 }
 
 // ------------------------------------------------------------------ assertions
 const failures = [];
 function check(cond, label) {
-  if (cond) console.log(`  ✔ ${label}`);
+  if (cond) console.log(`  ✓ ${label}`);
   else {
-    console.log(`  ✘ ${label}`);
+    console.log(`  ✗ ${label}`);
     failures.push(label);
   }
 }
 
-function stats(arr) {
-  if (!arr.length) return "n/a";
+function pct(arr, p) {
+  if (!arr.length) return NaN;
   const s = [...arr].sort((a, b) => a - b);
-  const avg = s.reduce((a, b) => a + b, 0) / s.length;
-  const p = (q) => s[Math.min(s.length - 1, Math.floor(q * s.length))];
-  return `n=${s.length}  avg=${avg.toFixed(1)}ms  p50=${p(0.5).toFixed(1)}ms  p95=${p(0.95).toFixed(1)}ms  max=${s[s.length - 1].toFixed(1)}ms`;
+  return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))];
 }
 
-// ------------------------------------------------------------------ scenario
+// ------------------------------------------------------------------ main
 async function main() {
-  log(`target ${wsUrl}  players=${N}`);
-
-  // 1. host connects and resets the room
+  log(`target ${wsUrl} · ${N} players`);
   const host = new SimClient("host", { host: true });
   await host.connect();
   host.send({ type: "host:reset" });
-  await waitFor(() => host.snap?.phase === "LOBBY" && host.snap.joined === 0, 5000, "reset → LOBBY");
-  log("room reset");
+  await waitFor(() => host.snap?.phase === "LOBBY" && host.snap.joined === 0, 5000, "reset to empty LOBBY");
 
-  // 2. players connect + join (staggered like a class scanning a QR code)
   const players = Array.from({ length: N }, (_, i) => new SimClient(`p${i}`));
-  await Promise.all(
-    players.map(async (p, i) => {
-      await sleep(i * 15);
-      await p.connect();
-      const emojis = p.snap.config.emojis;
-      p.send({ type: "join", nickname: `บอท${i}`, emoji: emojis[i % emojis.length] });
+  await Promise.all(players.map((p) => p.connect()));
+  players.forEach((p, i) => p.send({ type: "join", nickname: `ผู้เล่น${i}`, emoji: "🐱" }));
+  await waitFor(() => players.every((p) => p.snap?.you), 10000, "all players joined");
+  log(`joined ${host.live?.joined ?? host.snap.joined}`);
+
+  const early = players.slice(0, 2);
+  const idle = players.slice(2, 2 + Math.round(N * 0.1));
+  const tappers = players.slice(2 + idle.length);
+  const droppers = tappers.filter((_, i) => i % 10 === 3);
+
+  host.send({ type: "host:next" });
+  await waitFor(() => host.snap.phase === "INTRO", 5000, "INTRO");
+  log("INTRO");
+  await waitFor(() => host.snap.phase === "RACE", 15000, "RACE");
+  const { goAt, raceEndAt } = host.snap;
+  log(`RACE · green in ${goAt - host.serverNow()} ms`);
+
+  const raceJobs = [
+    ...early.map((p) => p.earlyBird(goAt)),
+    ...tappers.map((p) => p.race(goAt, raceEndAt)),
+    ...droppers.map(async (p) => {
+      await sleep(goAt - p.serverNow() + 2500);
+      await p.dropAndReconnect(rand(200, 800));
     }),
-  );
-  await waitFor(() => (host.live?.joined ?? host.snap.joined) === N, 15000, `${N} joined`);
-  await waitFor(() => players.every((p) => p.snap?.you), 10000, "all players have `you`");
-  log(`${N} players joined`);
+  ];
+  await Promise.all(raceJobs);
+  await waitFor(() => host.snap.phase === "LINEUP", 5000, "LINEUP");
+  log("LINEUP");
+  const lineup = host.snap;
 
-  // early bird: sends a tap before startAt, then never taps again
-  const early = players[N - 1];
-
-  // 10% flaky players
-  const flakyCount = Math.max(1, Math.round(N * 0.1));
-  const flaky = [...players.slice(0, N - 1)].sort(() => Math.random() - 0.5).slice(0, flakyCount);
-  const raceFlaky = flaky.slice(0, Math.ceil(flakyCount / 2));
-  const waitFlaky = flaky.slice(Math.ceil(flakyCount / 2));
-
-  // 3. countdown + race
-  host.send({ type: "host:next" });
-  await waitFor(() => players.every((p) => p.snap.phase === "TAP_COUNTDOWN" || p.snap.phase === "TAP_RACE"), 5000, "countdown");
-  const { startAt, endAt } = host.snap;
-  log(`countdown started (race in ${((startAt - host.serverNow()) / 1000).toFixed(1)}s)`);
-
-  const earlyDone = (async () => {
-    while (early.serverNow() < startAt - 400) await sleep(5);
-    early.send({ type: "taps", count: 1 }); // must be ignored (too early)
-  })();
-  const racing = players.filter((p) => p !== early).map((p) => p.race(startAt, endAt));
-  const raceDrops = raceFlaky.map(async (p) => {
-    while (p.serverNow() < startAt + rand(1500, 6000)) await sleep(20);
-    await p.dropAndReconnect(rand(400, 2000));
+  await waitFor(() => host.snap.phase === "EVENTS", 20000, "EVENTS");
+  log("EVENTS");
+  const movers = new Set();
+  // Wait for the gamble, answer, and drop some sockets meanwhile.
+  await waitFor(() => host.snap.events.some((e) => e.kind === "gamble"), 15000, "gamble event");
+  players.forEach((p, i) => {
+    const choice = i % 2 === 0 ? "move" : "stay";
+    if (choice === "move") movers.add(p);
+    setTimeout(() => p.send({ type: "gamble", choice }), rand(200, 4000));
+    if (i % 7 === 0) setTimeout(() => p.send({ type: "react", i: i % 4 }), rand(0, 3000));
   });
-  await Promise.all([earlyDone, ...racing, ...raceDrops]);
-  await waitFor(() => host.snap.phase === "TAP_RESULT", 5000, "TAP_RESULT");
-  log(`race over — host total taps ${host.live?.totalTaps ?? host.snap.totalTaps}`);
-  await sleep(1500);
+  await Promise.all(droppers.map((p) => sleep(rand(0, 2000)).then(() => p.dropAndReconnect(rand(200, 800)))));
 
-  // 4. waiting room (real 90 s) with pops, drops and one manual draw
-  host.send({ type: "host:next" });
-  await waitFor(() => host.snap.phase === "WAITING_ROOM", 5000, "WAITING_ROOM");
-  log("waiting room started (90 s)");
-  const inWaiting = () => host.snap.phase !== "WAITING_ROOM";
-  const popping = players.map((p) => p.popBubbles(inWaiting));
-  const waitDrops = waitFlaky.map(async (p) => {
-    await sleep(rand(5000, 75000));
-    await p.dropAndReconnect(rand(1000, 3000));
+  await waitFor(() => host.snap.phase === "CALL", 45000, "CALL");
+  log("CALL");
+  const call = host.snap;
+
+  await waitFor(() => host.snap.phase === "GUESS", 20000, "GUESS");
+  log("GUESS");
+  const guesses = [0, 0, 0, 0];
+  players.forEach((p) => {
+    const c = Math.floor(Math.random() * 4);
+    guesses[c]++;
+    setTimeout(() => p.send({ type: "guess", choice: c }), rand(100, 5000));
   });
-  const manualDraw = (async () => {
-    await sleep(45000);
-    host.send({ type: "host:draw" });
-    log("host triggered a manual draw");
-  })();
-  let lastDraws = 0;
-  const drawWatch = (async () => {
-    while (!inWaiting()) {
-      const d = host.snap.winners.filter((w) => w.kind === "draw");
-      if (d.length > lastDraws) {
-        lastDraws = d.length;
-        log(`draw → ticket ${d.at(-1).ticket} (${d.at(-1).nickname}) code ${d.at(-1).claimCode}`);
-      }
-      await sleep(100);
-    }
-  })();
-  await waitFor(() => host.snap.phase === "REVEAL", 100000, "REVEAL (auto)");
-  await Promise.all([...popping, ...waitDrops, manualDraw, drawWatch]);
-  log("waiting room ended automatically → REVEAL");
 
-  // 5. reveal lines + end
-  for (let i = 1; i <= 3; i++) {
-    await sleep(700);
-    host.send({ type: "host:next" });
-    await waitFor(() => host.snap.revealStep === i, 5000, `reveal step ${i}`);
+  await waitFor(() => host.snap.phase === "ZOOM", 20000, "ZOOM");
+  log("ZOOM");
+  const zoom = host.snap;
+  await waitFor(() => host.snap.phase === "END", 40000, "END");
+  await waitFor(() => players.every((p) => p.snap.phase === "END"), 10000, "all players in END");
+  log("END");
+  await sleep(500);
+  const end = host.snap;
+
+  // ---------------------------------------------------------------- checks
+  console.log("\nassertions");
+  const q = lineup.queue;
+  check(q.length === N && new Set(q.map((e) => e.no)).size === N, "LINEUP queue is a permutation of all players");
+  const back = q.slice(-early.length);
+  check(back.every((e) => e.foul) && q.filter((e) => e.foul).length === early.length, "false starters (and only they) are at the very back");
+  check(lineup.stats.fouls === early.length, "stats.fouls counts the false starters");
+  const idleNames = new Set(idle.map((p) => p.snap.you.nickname));
+  const idleBlock = q.slice(-(early.length + idle.length), -early.length);
+  check(idleBlock.every((e) => idleNames.has(e.nickname)), "non-tappers sit right before the false starters");
+  check(lineup.stats.tappers === tappers.length, `every tapper got a valid first tap (${lineup.stats.tappers}/${tappers.length})`);
+
+  check(call.events.length === 4, "all four events fired");
+  const g = call.events.find((e) => e.kind === "gamble");
+  check(g && g.resolved, "gamble resolved");
+  check(g && g.lucky + g.unlucky === g.movers && g.movers === movers.size, `gamble movers = players who chose move (${g?.movers}/${movers.size})`);
+
+  const winners = players.filter((p) => p.snap.you?.won);
+  check(winners.length === 1, "exactly one phone has won=true");
+  check(!!call.winner && call.queue[0].no === call.winner.no, "winner is queue #1");
+  check(winners.length === 1 && winners[0].snap.you.nickname === call.winner.nickname, "phone winner matches the big screen");
+  check(!!call.winner?.claimCode && /^\d{3}$/.test(call.winner.claimCode), "host sees a 3-digit claim code");
+  check(winners.length === 1 && winners[0].snap.you.claimCode === call.winner.claimCode, "winner phone shows the same claim code");
+
+  const sumTaps = players.reduce((a, p) => a + p.snap.you.taps, 0);
+  check(end.totalTaps === sumTaps, `server tap total = sum of player taps (${end.totalTaps} vs ${sumTaps})`);
+
+  check(JSON.stringify(zoom.guess.counts) === JSON.stringify(guesses), `guess counts match (${zoom.guess.counts} vs ${guesses})`);
+  check(zoom.guess.correct !== null, "correct guess bucket revealed in ZOOM");
+  const expectedRooms = Math.round(100000 / end.config.stats.psychiatristsPer100k / N);
+  check(end.roomsNeeded === expectedRooms, `roomsNeeded = ${expectedRooms}`);
+  check(players.every((p) => p.snap.phase === "END"), "every player ended in END");
+
+  console.log("\nbroadcast latency (ms)");
+  for (const [k, arr] of Object.entries(latency)) {
+    const avg = arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
+    console.log(`  ${k.padEnd(6)} n=${arr.length} avg=${avg.toFixed(1)} p50=${pct(arr, 50)} p95=${pct(arr, 95)} max=${pct(arr, 100)}`);
   }
-  await sleep(700);
-  host.send({ type: "host:next" });
-  await waitFor(() => players.every((p) => p.snap.phase === "END") && host.snap.phase === "END", 15000, "everyone END");
-  await sleep(1500); // let final live/state settle
-  log("everyone is in END");
-
-  // ---------------------------------------------------------------- assertions
-  console.log("\nAssertions");
-  const hs = host.snap;
-  const yous = players.map((p) => p.snap.you);
-
-  check(hs.joined === N, `host sees ${N} joined (got ${hs.joined})`);
-  check(players.every((p) => p.snap.phase === "END"), "every client ends in END");
-
-  const raceWinners = players.filter((p) => p.snap.you.won === "race");
-  check(raceWinners.length === 1, `exactly one tap-race winner (got ${raceWinners.length})`);
-  check(hs.winners.filter((w) => w.kind === "race").length === 1, "host shows exactly one race winner");
-  // The early bird still holds a ticket, so it may legitimately win a cancellation draw;
-  // what matters is that its pre-start tap neither won the race nor counted.
-  check(early.snap.you.won !== "race" && early.snap.you.taps === 0, "early tap before startAt was ignored (not race winner, 0 taps counted)");
-
-  const nonWinners = yous.filter((y) => y.won !== "race");
-  const tickets = nonWinners.map((y) => y.ticket);
-  const [tmin, tmax] = hs.config.queueNumberRange;
-  check(tickets.every((t) => Number.isInteger(t)), "every non-winner has a ticket");
-  check(new Set(tickets).size === tickets.length, `all ${tickets.length} tickets unique`);
-  check(tickets.every((t) => t >= tmin && t <= tmax), `tickets within ${tmin}–${tmax}`);
-  check(raceWinners.every((p) => p.snap.you.ticket === undefined), "race winner has no queue ticket");
-
-  const drawPlayers = players.filter((p) => p.snap.you.won === "draw");
-  const hostDraws = hs.winners.filter((w) => w.kind === "draw");
-  check(hostDraws.length === 3, `3 draws happened (2 scheduled + 1 manual) (got ${hostDraws.length})`);
-  check(drawPlayers.length === hostDraws.length, "each host-side draw matches exactly one player phone");
-  check(!drawPlayers.some((p) => raceWinners.includes(p)), "draws never picked the race winner");
-  check(new Set(hostDraws.map((w) => w.ticket)).size === hostDraws.length, "draws never repeat");
-  check(
-    hostDraws.every((w) => drawPlayers.some((p) => p.snap.you.ticket === w.ticket && p.snap.you.nickname === w.nickname)),
-    "draw tickets/nicknames on host match the winners' phones",
-  );
-
-  const codes = hs.winners.map((w) => w.claimCode);
-  check(codes.every((c) => /^\d{3}$/.test(c)), "claim codes are 3 digits");
-  check(new Set(codes).size === codes.length, "claim codes unique");
-  const phoneCodes = [...raceWinners, ...drawPlayers].map((p) => p.snap.you.claimCode);
-  check(phoneCodes.every((c) => codes.includes(c)), "winner phones show the same claim codes as the big screen");
-
-  const strip = (ws) => JSON.stringify(ws.map(({ kind, emoji, nickname, ticket }) => ({ kind, emoji, nickname, ticket })));
-  check(players.every((p) => strip(p.snap.winners) === strip(hs.winners)), "every phone has the same winners list as the host");
-  check(players.every((p) => p.snap.winners.every((w) => w.claimCode === undefined)), "phones never receive other players' claim codes");
-
-  const sumTaps = yous.reduce((a, y) => a + y.taps, 0);
-  const sumSent = players.reduce((a, p) => a + p.sentTaps, 0);
-  check(hs.totalTaps === sumTaps, `server total taps (${hs.totalTaps}) = sum of per-player taps (${sumTaps}); client-sent ${sumSent}`);
-  const sumPops = yous.reduce((a, y) => a + y.pops, 0);
-  check(hs.totalPops === sumPops, `server total pops (${hs.totalPops}) = sum of per-player pops (${sumPops})`);
-
-  const expectRooms = Math.round(100000 / hs.config.stats.psychiatristsPer100k / N);
-  check(hs.roomsNeeded === expectRooms, `roomsNeeded = ${hs.roomsNeeded} (expected ${expectRooms})`);
-
-  const unexpected = players.reduce((a, p) => a + p.unexpectedCloses, 0) + host.unexpectedCloses;
-  const reconnects = players.reduce((a, p) => a + p.reconnects, 0);
-  console.log(`\nInfo: ${reconnects} deliberate reconnects, ${unexpected} unexpected socket closes`);
-  console.log(`Race winner: ${raceWinners[0]?.snap.you.nickname} (code ${raceWinners[0]?.snap.you.claimCode}); total taps ${hs.totalTaps}`);
-
-  console.log("\nBroadcast latency (server send → client receive)");
-  console.log(`  state (full snapshot to every client): ${stats(latency.state)}`);
-  console.log(`  live  (throttled counters to host):    ${stats(latency.live)}`);
-  console.log("  (clock offsets estimated per client from min-RTT ping; accuracy ±RTT/2)");
+  const unexpected = players.reduce((a, p) => a + p.unexpectedCloses, 0);
+  console.log(`  reconnects (planned): ${players.reduce((a, p) => a + p.reconnects, 0)} · unexpected closes: ${unexpected}`);
 
   host.close();
   players.forEach((p) => p.close());
-
-  console.log(failures.length ? `\nFAILED: ${failures.length} assertion(s)` : "\nALL ASSERTIONS PASSED");
-  process.exit(failures.length ? 1 : 0);
+  if (failures.length) {
+    console.log(`\n${failures.length} ASSERTION(S) FAILED`);
+    process.exit(1);
+  }
+  console.log("\nALL ASSERTIONS PASSED");
+  process.exit(0);
 }
 
 main().catch((e) => {
-  console.error("\nLOAD TEST ERROR:", e.message);
+  console.error(e);
   process.exit(1);
 });

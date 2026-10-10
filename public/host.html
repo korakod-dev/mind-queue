@@ -14,6 +14,8 @@
   <body>
     <canvas id="confetti" hidden></canvas>
     <div class="offline-dot" id="offline" data-str="reconnecting" hidden></div>
+    <div class="phase-bar" id="phase-bar"><div id="phase-fill"></div></div>
+    <div class="reacts-layer" id="reacts-layer" aria-hidden="true"></div>
 
     <!-- boot / errors -->
     <section class="stage" id="h-boot">
@@ -29,73 +31,83 @@
       </div>
       <div class="lobby-right">
         <h1 class="h-title" data-str="joinTitle"></h1>
+        <p class="h-sub" data-str="lobbyHint"></p>
         <div class="joined num" id="joined"></div>
         <div class="emoji-wall" id="emoji-wall"></div>
       </div>
     </section>
 
-    <!-- TAP_COUNTDOWN / TAP_RACE -->
+    <!-- INTRO -->
+    <section class="stage" id="h-intro" hidden>
+      <div class="intro-door">🚪</div>
+      <h1 class="giant-text" data-str="introBig"></h1>
+      <p class="h-line num" id="intro-sub"></p>
+      <div class="urg-row num" id="intro-urg"></div>
+      <p class="h-sub" data-str="introHint"></p>
+    </section>
+
+    <!-- RACE -->
     <section class="stage" id="h-race" hidden>
-      <h1 class="h-title" data-str="tapButton"></h1>
-      <div class="giant num" id="race-big"></div>
-      <div class="progress"><div id="race-bar"></div></div>
-      <p class="h-sub num" id="race-sub"></p>
+      <div class="race-main">
+        <div class="light" id="race-light"></div>
+        <p class="race-msg" id="race-msg"></p>
+        <div class="giant num" id="race-total"></div>
+        <p class="h-sub" id="race-warn" data-str="raceWarn"></p>
+      </div>
+      <aside class="race-side">
+        <div class="side-title" data-str="topTappers"></div>
+        <ol class="top-list" id="top-list"></ol>
+        <div class="fouls" id="fouls"></div>
+      </aside>
     </section>
 
-    <!-- TAP_RESULT -->
-    <section class="stage" id="h-result" hidden>
-      <div class="winner-emoji" id="res-emoji"></div>
-      <p class="h-line" id="res-name"></p>
-      <div class="claim-box" id="res-claim">
-        <span class="label" data-str="claimCodeLabel"></span><span class="code num" id="res-code"></span>
-      </div>
-      <p class="h-sub num" id="res-taps"></p>
-    </section>
-
-    <!-- WAITING_ROOM -->
-    <section class="stage" id="h-waiting" hidden>
-      <div class="board">
-        <div class="label" data-str="nowCalling"></div>
-        <div class="led num" id="led"></div>
-        <div class="timer num" id="wait-timer"></div>
-        <div class="ahead num" id="wait-ahead"></div>
-      </div>
-      <div class="side">
-        <div class="pops num" id="wait-pops"></div>
-        <div class="winners" id="winners"></div>
-      </div>
-      <div class="announce" id="announce" hidden>
-        <p class="h-line" id="ann-text"></p>
-        <div class="winner-emoji" id="ann-emoji"></div>
-        <p class="h-line" id="ann-name"></p>
-        <div class="claim-box">
-          <span class="label" data-str="claimCodeLabel"></span><span class="code num" id="ann-code"></span>
-        </div>
+    <!-- LINEUP / EVENTS / CALL: the queue line stays on screen -->
+    <section class="stage" id="h-queue" hidden>
+      <div class="q-head" id="q-head"></div>
+      <div class="line" id="line">
+        <div class="door"><span>🚪</span><b data-str="doorLabel"></b></div>
       </div>
     </section>
 
-    <!-- REVEAL -->
-    <section class="stage" id="h-reveal" hidden>
-      <div class="reveal-frozen" id="rv-frozen">
-        <p class="h-line"><span data-str="nowCalling"></span> <span class="num" id="rv-called"></span></p>
+    <!-- GUESS -->
+    <section class="stage" id="h-guess" hidden>
+      <h1 class="h-line" id="guess-q"></h1>
+      <div class="bars" id="guess-bars"></div>
+      <p class="h-sub num" id="guess-answered"></p>
+    </section>
+
+    <!-- ZOOM -->
+    <section class="stage" id="h-zoom" hidden>
+      <div class="zoom-guess" id="zoom-guess">
+        <div class="bars" id="zoom-bars"></div>
+        <p class="h-line num" id="zoom-right"></p>
       </div>
-      <p class="reveal-line" id="rv-1" hidden></p>
-      <p class="reveal-line" id="rv-2" hidden></p>
-      <p class="reveal-line" id="rv-3" hidden></p>
-      <p class="source" id="rv-source" hidden></p>
+      <div class="zoom-viz" id="zoom-viz" hidden>
+        <div class="tiles" id="tiles"></div>
+        <div class="zoom-count num" id="zoom-count"></div>
+        <div class="zoom-doc" id="zoom-doc">👩‍⚕️ <span data-str="zoomDoc"></span></div>
+      </div>
+      <div class="zoom-text" id="zoom-text" hidden>
+        <p class="zt" id="zt-1"></p>
+        <p class="zt" id="zt-2"></p>
+        <p class="zt strong" id="zt-3"></p>
+        <p class="source" id="zoom-source"></p>
+      </div>
     </section>
 
     <!-- END -->
     <section class="stage" id="h-end" hidden>
       <div class="end-msg" data-str="endBig"></div>
+      <p class="h-line soft" data-str="endAsk"></p>
+      <div class="end-winner" id="end-winner"></div>
       <div class="footer" data-str="hotline"></div>
     </section>
 
-    <!-- presenter controls: Space/→ next · D draw · R reset · H hide · F fullscreen -->
+    <!-- presenter controls: Space/→ start or skip · M sound · R reset · H hide · F fullscreen -->
     <div class="ctl" id="ctl">
       <span class="info num" id="ctl-info"></span>
-      <button class="primary" id="ctl-next" data-str="ctlNext"></button>
-      <button id="ctl-draw" data-str="ctlDraw" hidden></button>
+      <button class="primary" id="ctl-next"></button>
+      <button id="ctl-sound"></button>
       <button id="ctl-fs" data-str="ctlFullscreen"></button>
       <button id="ctl-reset" data-str="ctlReset"></button>
       <button id="ctl-hide" data-str="ctlHide"></button>
@@ -106,6 +118,7 @@
     <script src="/js/strings.js"></script>
     <script src="/js/net.js"></script>
     <script src="/js/confetti.js"></script>
+    <script src="/js/sfx.js"></script>
     <script src="/js/host.js"></script>
   </body>
 </html>

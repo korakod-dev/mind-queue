@@ -1,7 +1,9 @@
 # คิวหน้าห้องจิตแพทย์ — realtime classroom warm-up game
 
-A ~5-minute game for 67 students on their phones, plus a presenter big screen.
+A self-running ~3-minute ice-breaker ("คิวเดียว 3 นาที") for 67 students on their phones, plus a presenter big screen.
 Message: *psychiatrists are scarce; getting seen depends on speed and luck, not on who needs it most.*
+
+The presenter presses start once; every phase after that runs on a timer. The big screen does the MC's job: it explains each step, plays synthesized music and sound effects (plus a Thai "ขอเชิญหมายเลข…" announcement when the OS has a Thai voice), and reads the twists out of the real game data. One special prize goes to the player who sees the doctor; everyone gets a snack from their friends at the end.
 
 - **Runtime:** Cloudflare Workers + one Durable Object (`GameRoom`, SQLite-backed, WebSocket Hibernation API)
 - **Frontend:** vanilla HTML/CSS/JS in `public/`, served by Workers Static Assets (no build step)
@@ -10,6 +12,8 @@ Message: *psychiatrists are scarce; getting seen depends on speed and luck, not 
 ![Classroom atmosphere (illustration)](docs/screenshots/classroom.jpg)
 
 ## Screenshots
+
+> The screenshots and videos below show the earlier 5-minute version (tap race → waiting room with bubbles → line-by-line reveal). The current flow is in the table under **Game flow**.
 
 ### Big screen (projector)
 
@@ -40,12 +44,17 @@ Both videos use procedurally generated background music, so there are no copyrig
 
 | # | Phase | What happens | Timing |
 |---|---|---|---|
-| 1 | LOBBY | Everyone scans the QR and picks a nickname + emoji | host advances |
-| 2 | TAP_COUNTDOWN → TAP_RACE | 3-2-1, then 10 s of tapping. The **first tap to reach the server wins**; tapping more does not help | automatic |
-| 3 | TAP_RESULT | Winner gets a 3-digit claim code; everyone else gets a queue ticket (1,000–2,999) | host advances |
-| 4 | WAITING_ROOM | "Now calling #3" crawls up; bubble pop / breathing; random cancellation draws at 30 s and 60 s | 90 s, automatic |
-| 5 | REVEAL | Real statistics, one line per click | host advances |
-| 6 | END | "ระหว่างรอหมอ… เพื่อนดูแลกันได้ 💛" + hotline 1323; everyone gets a snack | — |
+| 0 | LOBBY | Everyone scans the QR and picks a nickname + emoji (runs while people walk in) | host presses start |
+| 1 | INTRO | "หมอว่าง 1 คิว"; each phone flips a random, fictional patient card: 🔴 very urgent / 🟡 medium / 🟢 not urgent | 10 s |
+| 2 | RACE | Red light for a random 2.5–5 s, then green for 6 s. A press before green = false start (back of the queue). Queue order = arrival order of each player's **first** press after green; the big screen shows the top tappers to bait mashing | ~11 s |
+| 3 | LINEUP | Every emoji lines up at the exam-room door. Auto twist cards: fastest player, "most taps → queue #38", room total "but only the first tap counted", false starts | 15 s |
+| 4 | EVENTS | Four queue events reshuffle the line live: 📄 documents incomplete (front 5 → back), 🏥 free slot at a far hospital (players opt in, 50/50 front or back), 🔀 queue system crash (10 swap), 📞 cancellation (someone from the back half → #1) | 40 s |
+| 5 | CALL | Drum roll → ding-dong "ขอเชิญหมายเลข 1" → the winner + 3-digit claim code (**the only prize**) → the line recolours by urgency: "seen: 🟢 · still waiting: 🔴 22" | 15 s |
+| 6 | GUESS | "How many rooms like ours per psychiatrist?" 4 choices, live bar chart | 12 s |
+| 7 | ZOOM | Answer reveal → our room becomes 1 tile among ~1,166 → statistics + source | 28 s |
+| 8 | END | "ระหว่างรอหมอ… เพื่อนดูแลกันได้ 💛", "ask your neighbour how they've been", hotline 1323; snacks passed along each row | — |
+
+Total after start ≈ 2:15. Phones can send emoji reactions (😱😂🙏💛) that float up on the big screen.
 
 Presenter script and checklists: [`RUNSHEET.th.md`](RUNSHEET.th.md) (Thai). Snack-helper guide: [`helper-guide.html`](helper-guide.html).
 
@@ -56,13 +65,13 @@ src/index.ts        Worker: /ws → Durable Object "main"; everything else → s
 src/room.ts         GameRoom Durable Object: state machine, sockets, alarms, persistence
 src/protocol.ts     WebSocket message + snapshot types (the protocol reference)
 src/config.ts       every number in the game (+ stats source)
-public/index.html   player page            public/js/player.js, bubbles.js, confetti.js
-public/host.html    big screen (/host)     public/js/host.js
+public/index.html   player page            public/js/player.js, confetti.js
+public/host.html    big screen (/host)     public/js/host.js, sfx.js (Web Audio music/SFX + Thai TTS)
 public/js/net.js    reconnecting WebSocket + server-clock sync (shared)
 public/js/strings.js  all Thai UI strings
 scripts/loadtest.mjs  80-player end-to-end load test
-docs/screenshots/   README screenshots
-media/              how-to-play + classroom-atmosphere videos
+docs/screenshots/   README screenshots (earlier version)
+media/              how-to-play + classroom-atmosphere videos (earlier version)
 helper-guide.html   snack-helper guide (Thai)
 RUNSHEET.th.md      presenter run sheet (Thai)
 ```
@@ -75,7 +84,7 @@ RUNSHEET.th.md      presenter run sheet (Thai)
 | `/host?key=HOST_KEY` | presenter | key is moved to `sessionStorage` and removed from the address bar on load |
 | `/ws` | both | WebSocket; becomes host only if `hello.hostKey` matches the `HOST_KEY` secret |
 
-Host keys: `Space` / `→` / `PageDown` = next · `D` = cancellation draw · `R` = reset (confirm) · `H` = hide control bar · `F` = fullscreen.
+Host keys: `Space` / `→` / `PageDown` = start (in the lobby) or skip the current phase · `M` = sound on/off · `R` = reset (confirm) · `H` = hide control bar · `F` = fullscreen. Browsers only play audio after a gesture, so any key or click on the host page unlocks sound.
 
 ## Setup
 
@@ -142,12 +151,13 @@ Sources: [DO pricing](https://developers.cloudflare.com/durable-objects/platform
 
 ## How it works (short)
 
-- **Server-authoritative state machine:** `LOBBY → TAP_COUNTDOWN → TAP_RACE → TAP_RESULT → WAITING_ROOM → REVEAL → END`. Timed phases advance on their own: the countdown runs `countdownSeconds`, the race `tapRaceSeconds`, and the waiting room `waitingRoom.durationSec`. Every phase change sends a full per-client snapshot.
-- **Race winner:** the first `taps` message the DO processes with `startAt ≤ now < endAt`. Arrival order decides; client timestamps are never trusted. The winner stays hidden until `TAP_RESULT` so everyone keeps tapping.
-- **Counters are cumulative:** `taps`/`pops` carry running totals and the server keeps the max per player. Resends after a reconnect are therefore idempotent. The server also caps them at a plausible human rate.
-- **Clock sync:** clients measure their offset to the server clock with `time` requests and keep the sample with the lowest RTT. The countdown, timers and breathing circle are drawn from server time.
-- **Heartbeat:** clients send the literal `ping` and the runtime answers `pong` without waking the DO. Sockets with no ping for 45 s are closed. A client that gets no traffic for 35 s reconnects (exponential backoff with jitter, plus an immediate retry on tab-visible or `online`).
-- **Persistence:** hibernation wipes memory, so the game state is also written to the DO's own storage. Important events are written at once; counters at most once per second. `Reset` deletes everything. After 6 h without activity an alarm wipes the data. Only nickname, emoji, ticket number and counters are stored.
+- **Server-authoritative state machine:** `LOBBY → INTRO → RACE → LINEUP → EVENTS → CALL → GUESS → ZOOM → END`. After the host starts, every phase runs on `config.timeline`; each phase starts exactly when the previous one was scheduled to end, so a late alarm never stretches the timeline. `host:next` skips the current phase. Every phase change and queue event sends a full per-client snapshot.
+- **Race:** `goAt` (the green light) is in the snapshot, so every phone turns green at the same server time. A `taps` message arriving before `goAt − foulGraceMs` is a false start; one inside the grace window is ignored. Queue order = server arrival order of each player's first tap after `goAt`, then players who never tapped (shuffled), then false starters. Client timestamps are never trusted.
+- **Events and winner:** the four events fire at `config.events.times` (slot 1 is always the gamble; the others are shuffled). The winner is queue #1 at CALL, skipping players with no live socket. Late joiners go to the back of the queue.
+- **Counters are cumulative:** `taps` carries a running total and the server keeps the max per player. Resends after a reconnect are therefore idempotent. The server also caps it at a plausible human rate.
+- **Clock sync:** clients measure their offset to the server clock with `time` requests and keep the sample with the lowest RTT. The red/green light, the call reveal and the zoom animation are drawn from server time, so a refresh lands on the same moment.
+- **Heartbeat:** clients send the literal `ping` and the runtime answers `pong` without waking the DO. Sockets with no ping or message for 45 s are treated as offline and closed (every message refreshes liveness, and clients resync time every 30 s). A client that gets no traffic for 35 s reconnects (exponential backoff with jitter, plus an immediate retry on tab-visible or `online`).
+- **Persistence:** hibernation wipes memory, so the game state is also written to the DO's own storage. Important events are written at once; counters at most once per second. `Reset` deletes everything. After 6 h without activity an alarm wipes the data. Only nickname, emoji, the random patient card, queue position, taps and answers are stored.
 - **Big screen throttling:** live counters go only to the host, at most every 100 ms (≈10/s) and only when something changed.
 
 ## Load test
@@ -164,27 +174,26 @@ HOST_KEY=<prod key> node scripts/loadtest.mjs https://queue.korakod.dev
 
 Options: `--players 80` (default 80). Without a `HOST_KEY` env var it reads `.dev.vars`.
 
-It runs one host and N players through a full game. The waiting room runs its real 90 s, so a run takes about 2.5 min. During the run:
+It runs one host and N players through a full game on the real timeline (about 2 min 15 s). During the run:
 
-- players tap ~10/s with 500 ms batching;
-- one "early bird" taps before `startAt`;
-- ~10 % of players drop and reconnect mid-race and mid-waiting-room;
-- the host triggers one manual draw.
+- players tap ~10/s after the green light with 500 ms batching (first press sent at once);
+- two "early birds" press before the green light; ~10 % never tap;
+- ~10 % of players drop and reconnect during the race and the events;
+- half the players opt into the gamble; everyone answers the guess; some send reactions.
 
 It asserts:
 
-- exactly one winner, and the early tap was ignored;
-- tickets are unique and in range;
-- draws never pick the winner and never repeat;
-- claim codes are unique;
-- every client ends in END with the same winners list;
-- server totals equal the per-player sums;
-- `roomsNeeded` is correct.
+- the lineup is a permutation of all players, false starters at the very back and non-tappers just before them;
+- all four events fire and the gamble resolves with lucky + unlucky = movers;
+- exactly one winner: queue #1, the only phone with `won`, with the same claim code as the big screen;
+- every client ends in END;
+- the server tap total equals the per-player sum;
+- guess counts match the answers sent, and `roomsNeeded` is correct.
 
 It also prints broadcast latency (avg/p50/p95/max). The process exits non-zero if any assertion fails.
 
 ## Configuration
 
-All numbers live in `src/config.ts` and reach the clients inside each snapshot. Examples are the race length, the ticket range, waiting-room timing and draw times, and the statistics with their source label. Thai UI text is in `public/js/strings.js`.
+All numbers live in `src/config.ts` and reach the clients inside each snapshot. Examples are the phase durations, the red-light range, event times, guess buckets, and the statistics with their source label. Thai UI text is in `public/js/strings.js`.
 
 The reveal statistic (`psychiatristsPer100k: 1.28`; the source label still says Department of Mental Health, Dec 2022, and must match the figure) **must be re-verified by the presenter before the event.**
