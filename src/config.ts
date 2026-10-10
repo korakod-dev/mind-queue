@@ -7,7 +7,7 @@
 export const config = {
   expectedPlayers: 67,
 
-  /** Every phase after LOBBY runs on these timers (~2:10 in total). */
+  /** Every phase after LOBBY runs on these timers (~2:26 in total). The host can pause with P. */
   timeline: {
     introSec: 10,
     /** Lead so the RACE snapshot reaches every phone before the red light counts. */
@@ -18,13 +18,13 @@ export const config = {
     frenzySec: 6,
     /** Late tap batches still count toward the totals for this long after the race. */
     raceTailMs: 700,
-    lineupSec: 15,
+    lineupSec: 18,
     eventsSec: 40,
-    callSec: 15,
+    callSec: 20,
     /** CALL: drum roll first; the winner is revealed this long after CALL starts. */
     callRevealMs: 2600,
     guessSec: 12,
-    zoomSec: 28,
+    zoomSec: 34,
   },
 
   /** Taps arriving this close before the green light are ignored instead of counted as a false start. */

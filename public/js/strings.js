@@ -105,6 +105,11 @@ window.STR = {
   zoomLine3: "การได้พบหมอขึ้นกับความเร็วและโชค… ไม่ใช่ว่าใครต้องการที่สุด",
   zoomScale: "1 จุด = {k} ห้อง",
   lookAtScreen: "ดูที่จอหน้าห้องเลย 👀",
+  lookUp: "ดูจอใหญ่",
+  lookUpCall: "กำลังเรียกคิว…",
+  phoneCallSum: "ผู้ได้พบหมอ {emoji} {icon} {label}\n🔴 ด่วนมาก ยังรออยู่ {red} คน",
+  phoneZoomSum: "จิตแพทย์ 1 คน : ห้องแบบเรา {rooms} ห้อง",
+  paused: "⏸ หยุดชั่วคราว",
 
   // --- end
   endBig: "ระหว่างรอหมอ… เพื่อนดูแลกันได้ 💛",
@@ -119,6 +124,8 @@ window.STR = {
   ctlReset: "รีเซ็ต",
   ctlHide: "ซ่อน",
   ctlFullscreen: "เต็มจอ",
+  ctlPause: "⏸ หยุด",
+  ctlResume: "▶ เล่นต่อ",
   ctlSound: "🔊 เสียง",
   ctlMuted: "🔇 ปิดเสียง",
   ctlOnline: "ออนไลน์ {n}",

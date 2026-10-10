@@ -186,6 +186,22 @@ body {
   background: linear-gradient(90deg, var(--teal), var(--peach));
 }
 
+/* Pause badge */
+.paused-badge {
+  position: fixed;
+  top: 22px;
+  right: 24px;
+  z-index: 55;
+  padding: 0.6vh 1.8vw;
+  border-radius: 999px;
+  background: #1d4743;
+  color: #ffd27d;
+  font-size: var(--mid);
+  font-weight: 800;
+  box-shadow: var(--shadow);
+  animation: throb 1.4s ease-in-out infinite;
+}
+
 /* Floating reactions from phones */
 .reacts-layer {
   position: fixed;

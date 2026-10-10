@@ -16,6 +16,7 @@
     <div class="offline-dot" id="offline" data-str="reconnecting" hidden></div>
     <div class="phase-bar" id="phase-bar"><div id="phase-fill"></div></div>
     <div class="reacts-layer" id="reacts-layer" aria-hidden="true"></div>
+    <div class="paused-badge" id="paused" data-str="paused" hidden></div>
 
     <!-- boot / errors -->
     <section class="stage" id="h-boot">
@@ -103,10 +104,11 @@
       <div class="footer" data-str="hotline"></div>
     </section>
 
-    <!-- presenter controls: Space/→ start or skip · M sound · R reset · H hide · F fullscreen -->
+    <!-- presenter controls: Space/→ start or skip · P pause · M sound · R reset · H hide · F fullscreen -->
     <div class="ctl" id="ctl">
       <span class="info num" id="ctl-info"></span>
       <button class="primary" id="ctl-next"></button>
+      <button id="ctl-pause"></button>
       <button id="ctl-sound"></button>
       <button id="ctl-fs" data-str="ctlFullscreen"></button>
       <button id="ctl-reset" data-str="ctlReset"></button>

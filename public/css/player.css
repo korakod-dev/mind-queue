@@ -277,19 +277,58 @@ body {
   }
 }
 
-/* ---------------------------------------------------------------- queue */
+/* ---------------------------------------------------------------- watch phases ("look at the big screen") */
 
-#s-queue {
+.screen.look {
+  gap: 14px;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+.look-up {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.look-up .arrow {
+  font-size: 96px;
+  line-height: 1;
+  animation: point-up 1.1s ease-in-out infinite;
+}
+
+@keyframes point-up {
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+.look-text {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--teal-strong);
+}
+
+.look-sub {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  min-height: 1.5em;
+}
+
+.mini {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
 .urg-pill {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
-  padding: 6px 16px;
+  padding: 3px 12px;
   border-radius: 999px;
   background: var(--surface);
-  border: 3px solid var(--line);
+  border: 2px solid var(--line);
 }
 
 .urg-pill[data-u="3"] {
@@ -302,87 +341,44 @@ body {
   border-color: #35b34f;
 }
 
-.q-label {
-  font-size: 20px;
-  color: var(--ink-soft);
-  font-weight: 600;
-  margin-top: 6px;
-}
-
-.q-pos {
-  font-size: 120px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--teal-strong);
-}
-
-.q-pos.up {
-  animation: pos-up 0.8s cubic-bezier(0.2, 1.4, 0.4, 1);
-  color: #22963f;
-}
-
-.q-pos.down {
-  animation: pos-down 0.8s ease-out;
-  color: #c2412d;
-}
-
-@keyframes pos-up {
-  from {
-    transform: translateY(60px) scale(0.6);
-    opacity: 0;
-  }
-}
-
-@keyframes pos-down {
-  0%,
-  100% {
-    transform: none;
-  }
-  20%,
-  60% {
-    transform: translateX(-12px);
-  }
-  40%,
-  80% {
-    transform: translateX(12px);
-  }
-}
-
-.q-move {
+.q-mini {
   font-size: 20px;
   font-weight: 800;
-  min-height: 1.5em;
-}
-
-.q-move.up {
-  color: #22963f;
-}
-
-.q-move.down {
-  color: #c2412d;
-}
-
-.q-info {
-  font-size: 16px;
   color: var(--ink-soft);
-  min-height: 1.5em;
 }
 
-.q-event {
-  font-size: 22px;
-  font-weight: 700;
+.q-mini.up {
+  color: #22963f;
+  animation: pop 0.5s ease-out;
+}
+
+.q-mini.down {
+  color: #c2412d;
+  animation: pop 0.5s ease-out;
+}
+
+.q-sum {
   white-space: pre-line;
-  min-height: 1.5em;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.5;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  animation: pop 0.5s ease-out;
 }
 
-.q-event.drum {
-  animation: throb 0.5s ease-in-out infinite;
+.gamble-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
-@keyframes throb {
-  50% {
-    transform: scale(0.95);
-  }
+.gamble-box .soft {
+  margin: 0;
 }
 
 .gamble {
@@ -393,7 +389,7 @@ body {
 }
 
 .g-btn {
-  min-height: 72px;
+  min-height: 84px;
   border-radius: 16px;
   font-size: 22px;
   font-weight: 800;
@@ -409,25 +405,49 @@ body {
   background: var(--teal);
 }
 
-/* Reaction bar */
+@keyframes throb {
+  50% {
+    transform: scale(0.95);
+  }
+}
+
+/* Reaction bar: small, pinned to the bottom so it does not pull eyes down */
 .reacts {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(14px + env(safe-area-inset-bottom));
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 8px;
 }
 
 .reacts button {
-  width: 58px;
-  height: 58px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  font-size: 30px;
+  font-size: 22px;
   background: var(--surface);
   box-shadow: var(--shadow);
+  opacity: 0.85;
 }
 
 .reacts button.hit {
   animation: pop 0.3s ease-out;
+}
+
+/* Pause */
+.paused-pill {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: #1d4743;
+  color: #ffd27d;
+  font-weight: 800;
 }
 
 /* ---------------------------------------------------------------- win */

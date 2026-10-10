@@ -1,7 +1,7 @@
 /**
  * Player (phone) page.
  *
- * Renders purely from the latest server snapshot + the synced server clock (net.now()).
+ * Renders purely from the latest server snapshot + the synced server clock (net.now(), frozen while paused).
  * Local-only state: the tap counter (cumulative, reconciled with the server's acknowledged
  * count on every snapshot) and the join form inputs.
  */
@@ -35,6 +35,10 @@
   let celebrated = null; // claim code we already threw confetti for
   let joinPending = false;
   let lastPos = null;
+  let lastAsking = false;
+
+  /** Game clock: server time, frozen while the host has paused. */
+  const clock = () => (snap && snap.pausedAt != null ? snap.pausedAt : net.now());
 
   const net = new Net({
     hello: () => ({ type: "hello", playerId }),
@@ -95,7 +99,12 @@
   // ------------------------------------------------------------ rendering
   function show(id) {
     if (screen === id) return;
+    const wasInput = ["s-intro", "s-tap", "s-guess"].includes(screen);
     screen = id;
+    if (wasInput && (id === "s-queue" || id === "s-reveal")) {
+      buzz([60, 40, 60]); // "look up" cue
+      flash("rgba(46,140,128,.35)");
+    }
     document.querySelectorAll(".screen").forEach((el) => {
       el.hidden = el.id !== id;
     });
@@ -137,7 +146,7 @@
 
   function render() {
     const you = snap.you;
-    const now = net.now();
+    const now = clock();
     const id = pickScreen(now);
 
     document.querySelectorAll("[data-you]").forEach((el) => {
@@ -163,6 +172,8 @@
     }
     $("end-claim").hidden = !(you && you.won);
     if (id === "s-guess") renderGuess();
+    if (id === "s-reveal") renderZoom(now);
+    $("paused").hidden = snap.pausedAt == null;
     show(id);
   }
 
@@ -177,72 +188,66 @@
     $("card-label").textContent = STR[`urg${u}`];
   }
 
+  /** Watch phases: the phone points at the big screen and keeps one small personal line. */
   function renderQueue(now) {
     const you = snap.you;
     $("q-urg").textContent = urgText(you.urgency);
     $("q-urg").dataset.u = String(you.urgency);
 
-    // Position, with a bounce + buzz when it changes.
-    const posEl = $("q-pos");
-    posEl.textContent = you.pos == null ? "—" : num(you.pos);
+    // Queue number stays small; a change only recolours it and buzzes.
+    const mini = $("q-mini");
+    mini.textContent = you.pos == null ? "" : `${STR.youPos} ${num(you.pos)}`;
     if (lastPos !== null && you.pos !== lastPos) {
       const up = you.pos < lastPos;
-      posEl.classList.remove("up", "down");
-      void posEl.offsetWidth;
-      posEl.classList.add(up ? "up" : "down");
+      mini.classList.remove("up", "down");
+      void mini.offsetWidth;
+      mini.classList.add(up ? "up" : "down");
       buzz(up ? [40, 40, 40] : 150);
-      flash(up ? "rgba(53,179,79,.55)" : "rgba(224,54,42,.45)");
     }
     lastPos = you.pos;
 
-    // Latest move caused by the latest event.
-    const lastEv = snap.events.length - 1;
-    const mv = you.moves.length ? you.moves[you.moves.length - 1] : null;
-    const moveEl = $("q-move");
-    if (mv && mv.slot === lastEv && snap.phase === "EVENTS") {
-      moveEl.textContent = fmt(mv.to < mv.from ? STR.moveUp : STR.moveDown, mv);
-      moveEl.className = `q-move ${mv.to < mv.from ? "up" : "down"}`;
-    } else {
-      moveEl.textContent = "";
-      moveEl.className = "q-move";
+    let sub = "";
+    if (snap.phase === "LINEUP" && you.foul) sub = STR.youFoul;
+    if (snap.phase === "CALL" && !callRevealed(now)) sub = STR.lookUpCall;
+    $("look-sub").textContent = sub;
+
+    // The gamble is an input moment: full screen buttons until the player picks.
+    const ev = snap.phase === "EVENTS" ? snap.events[snap.events.length - 1] : null;
+    const gambleOpen = !!ev && ev.kind === "gamble" && !ev.resolved && now < ev.decideUntil;
+    const asking = gambleOpen && !you.gamble;
+    $("gamble-box").hidden = !asking;
+    $("look-up").hidden = asking;
+    if (asking) $("g-left").textContent = fmt(STR.timeLeft, { s: Math.max(0, Math.ceil((ev.decideUntil - now) / 1000)) });
+    $("g-chosen").textContent = gambleOpen && you.gamble
+      ? fmt(STR.gambleChosen, { c: you.gamble === "move" ? STR.gambleMove : STR.gambleStay })
+      : "";
+    if (asking !== lastAsking) {
+      if (asking) {
+        buzz([80, 60, 80]);
+        flash("rgba(242,162,48,.5)");
+      }
+      lastAsking = asking;
     }
 
-    // Info line.
-    let info = "";
-    if (snap.phase === "LINEUP") {
-      if (you.foul) info = STR.youFoul;
-      else {
-        info = fmt(STR.youTaps, { n: num(you.taps) });
-        if (you.reactionMs != null) info += ` · ${fmt(STR.youReaction, { sec: secs(you.reactionMs) })}`;
-      }
+    // Fallback for players who never look up: the core message in one line.
+    const sum = $("q-sum");
+    const showSum = snap.phase === "CALL" && callRevealed(now) && snap.winner && snap.waiting;
+    sum.hidden = !showSum;
+    if (showSum) {
+      sum.textContent = fmt(STR.phoneCallSum, {
+        emoji: snap.winner.emoji,
+        icon: STR[`urgIcon${snap.winner.urgency}`],
+        label: STR[`urg${snap.winner.urgency}`],
+        red: num(snap.waiting[2]),
+      });
     }
-    $("q-info").textContent = info;
+  }
 
-    // Event / call line.
-    const evEl = $("q-event");
-    const gamble = $("gamble");
-    gamble.hidden = true;
-    evEl.className = "q-event";
-    if (snap.phase === "EVENTS") {
-      const ev = snap.events[lastEv];
-      if (!ev) evEl.textContent = STR.noEventYet;
-      else {
-        evEl.textContent = STR[`ev_${ev.kind}_t`];
-        if (ev.kind === "gamble" && !ev.resolved) {
-          if (you.gamble) {
-            evEl.textContent += `\n${fmt(STR.gambleChosen, { c: you.gamble === "move" ? STR.gambleMove : STR.gambleStay })}`;
-          } else if (now < ev.decideUntil) {
-            evEl.textContent += `\n${STR.ev_gamble_d}`;
-            gamble.hidden = false;
-          }
-        }
-      }
-    } else if (snap.phase === "CALL") {
-      evEl.textContent = callRevealed(now) ? STR.youLose : STR.callDrum;
-      evEl.classList.toggle("drum", !callRevealed(now));
-    } else {
-      evEl.textContent = "";
-    }
+  function renderZoom(now) {
+    const sum = $("zoom-sum");
+    const show = now >= snap.phaseStartAt + 19000 && snap.roomsNeeded != null;
+    sum.hidden = !show;
+    if (show) sum.textContent = fmt(STR.phoneZoomSum, { rooms: num(snap.roomsNeeded) });
   }
 
   function renderGuess() {
@@ -350,8 +355,8 @@
 
   tapBtn.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    if (!snap || snap.phase !== "RACE" || !snap.goAt) return;
-    const now = net.now();
+    if (!snap || snap.phase !== "RACE" || !snap.goAt || snap.pausedAt != null) return;
+    const now = clock();
     if (now >= snap.raceEndAt) return;
     localTaps++;
     $("tap-count").textContent = fmt(STR.tapCount, { n: num(localTaps) });
@@ -377,7 +382,7 @@
 
   setInterval(() => {
     if (!snap || snap.phase !== "RACE" || !snap.goAt) return;
-    const now = net.now();
+    const now = clock();
     // Keep sending a little past raceEndAt so the last batch is not lost.
     if (now >= snap.goAt && now < snap.raceEndAt + 600) sendTaps();
   }, 500);
@@ -419,7 +424,7 @@
   function loop() {
     requestAnimationFrame(loop);
     if (!snap) return;
-    const now = net.now();
+    const now = clock();
     buildReacts(snap.config.reactions);
 
     if (screen === "s-tap" && snap.goAt) {
@@ -447,7 +452,7 @@
     // Time-based screen changes (call reveal, gamble window closing) without a new snapshot.
     if (now - lastScreenCheck > 200) {
       lastScreenCheck = now;
-      if (snap.phase === "CALL" || snap.phase === "EVENTS") render();
+      if (snap.phase === "CALL" || snap.phase === "EVENTS" || snap.phase === "ZOOM") render();
     }
   }
   requestAnimationFrame(loop);

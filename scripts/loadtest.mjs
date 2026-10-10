@@ -15,6 +15,7 @@
  *  - ~10 % of players disconnect and reconnect (same playerId) during RACE and EVENTS
  *  - EVENTS: about half the players answer "move" to the gamble
  *  - GUESS: every player picks a random answer; players send a few reactions
+ *  - the host pauses for 3 s during EVENTS, then resumes
  *
  * Asserts
  *  - LINEUP queue is a permutation of all players; false starters are at the very back,
@@ -284,11 +285,25 @@ async function main() {
   });
   await Promise.all(droppers.map((p) => sleep(rand(0, 2000)).then(() => p.dropAndReconnect(rand(200, 800)))));
 
-  await waitFor(() => host.snap.phase === "CALL", 45000, "CALL");
+  // Pause for 3 s once the gamble has resolved: nothing may advance, then everything shifts.
+  await waitFor(() => host.snap.events.some((e) => e.kind === "gamble" && e.resolved), 15000, "gamble resolved");
+  const endBefore = host.snap.phaseEndAt;
+  const eventsBefore = host.snap.events.length;
+  host.send({ type: "host:pause" });
+  await waitFor(() => host.snap.pausedAt != null, 3000, "paused");
+  const pausedSnapPhase = host.snap.phase;
+  await sleep(3000);
+  const frozen = host.snap.phase === pausedSnapPhase && host.snap.events.length === eventsBefore && host.snap.pausedAt != null;
+  host.send({ type: "host:pause" });
+  await waitFor(() => host.snap.pausedAt == null, 3000, "resumed");
+  const pauseShift = host.snap.phaseEndAt - endBefore;
+  log(`paused 3 s → phase end moved ${pauseShift} ms`);
+
+  await waitFor(() => host.snap.phase === "CALL", 50000, "CALL");
   log("CALL");
   const call = host.snap;
 
-  await waitFor(() => host.snap.phase === "GUESS", 20000, "GUESS");
+  await waitFor(() => host.snap.phase === "GUESS", 30000, "GUESS");
   log("GUESS");
   const guesses = [0, 0, 0, 0];
   players.forEach((p) => {
@@ -300,7 +315,7 @@ async function main() {
   await waitFor(() => host.snap.phase === "ZOOM", 20000, "ZOOM");
   log("ZOOM");
   const zoom = host.snap;
-  await waitFor(() => host.snap.phase === "END", 40000, "END");
+  await waitFor(() => host.snap.phase === "END", 50000, "END");
   await waitFor(() => players.every((p) => p.snap.phase === "END"), 10000, "all players in END");
   log("END");
   await sleep(500);
@@ -318,6 +333,8 @@ async function main() {
   check(idleBlock.every((e) => idleNames.has(e.nickname)), "non-tappers sit right before the false starters");
   check(lineup.stats.tappers === tappers.length, `every tapper got a valid first tap (${lineup.stats.tappers}/${tappers.length})`);
 
+  check(frozen, "pause froze the phase and the events");
+  check(pauseShift >= 2900 && pauseShift <= 4500, `resume shifted the timeline by the paused time (${pauseShift} ms)`);
   check(call.events.length === 4, "all four events fired");
   const g = call.events.find((e) => e.kind === "gamble");
   check(g && g.resolved, "gamble resolved");

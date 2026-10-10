@@ -8,7 +8,7 @@
  *   messages (joined / online / taps / top tappers / false starts / reactions / guesses).
  * - Timed effects (green light, call reveal, zoom timeline) are driven by the synced server
  *   clock, so a refresh lands on the same moment.
- * - Keyboard: Space or → = start / skip phase, M = sound on/off, R = reset (confirm),
+ * - Keyboard: Space or → = start / skip phase, P = pause / resume, M = sound on/off, R = reset (confirm),
  *   H = hide bar, F = fullscreen. Any key or click also unlocks audio.
  */
 (function () {
@@ -50,6 +50,9 @@
   let lastPhaseKey = null; // phase + phaseStartAt of the last rendered snapshot
   let seenEvents = 0;
   const once = new Set(); // one-shot effects already played, keyed by phase start
+
+  /** Game clock: server time, frozen while the host has paused. */
+  const clock = () => (snap && snap.pausedAt != null ? snap.pausedAt : net.now());
 
   const net = new Net({
     hello: () => ({ type: "hello", hostKey }),
@@ -184,6 +187,9 @@
     if (entered && prev) onEnterPhase(s.phase);
     setMusicFor(s.phase);
 
+    $("paused").hidden = s.pausedAt == null;
+    $("ctl-pause").hidden = s.phaseEndAt == null;
+    $("ctl-pause").textContent = s.pausedAt != null ? STR.ctlResume : STR.ctlPause;
     const next = $("ctl-next");
     next.textContent = s.phase === "LOBBY" ? STR.ctlStart : STR.ctlSkip;
     next.hidden = s.phase === "END";
@@ -199,14 +205,18 @@
   }
 
   function setMusicFor(phase) {
-    const now = net.now();
+    const now = clock();
     let m = null;
+    if (snap.pausedAt != null) {
+      SFX.music(null);
+      return;
+    }
     if (phase === "LOBBY") m = "lobby";
     else if (phase === "INTRO" || phase === "LINEUP") m = "calm";
     else if (phase === "RACE") m = snap.goAt && now >= snap.goAt && now < snap.raceEndAt ? "frenzy" : "tension";
     else if (phase === "EVENTS" || phase === "GUESS") m = "tension";
     else if (phase === "CALL") m = now >= snap.phaseStartAt + snap.config.timeline.callRevealMs + 3000 ? "calm" : null;
-    else if (phase === "ZOOM") m = now >= snap.phaseStartAt + 18000 ? "calm" : null;
+    else if (phase === "ZOOM") m = now >= snap.phaseStartAt + 19000 ? "calm" : null;
     else if (phase === "END") m = "calm";
     SFX.music(m);
   }
@@ -343,7 +353,7 @@
     door.querySelector("span").style.fontSize = `${size * 0.5}px`;
 
     const keep = new Set();
-    const revealed = snap.phase === "CALL" && net.now() >= snap.phaseStartAt + snap.config.timeline.callRevealMs;
+    const revealed = snap.phase === "CALL" && clock() >= snap.phaseStartAt + snap.config.timeline.callRevealMs;
     const winnerNo = revealed && snap.winner ? snap.winner.no : null;
     q.forEach((p, i) => {
       keep.add(p.no);
@@ -429,7 +439,7 @@
       return;
     }
     if (s.phase === "CALL") {
-      const revealed = net.now() >= s.phaseStartAt + s.config.timeline.callRevealMs;
+      const revealed = clock() >= s.phaseStartAt + s.config.timeline.callRevealMs;
       if (!revealed || !s.winner) {
         head.append(el("h2", "q-title drum", s.winner || !revealed ? STR.callDrum : STR.callNoOne));
         return;
@@ -537,12 +547,13 @@
     const t = now - snap.phaseStartAt;
     const GUESS_UNTIL = 6500;
     const FILL_FROM = 9000;
-    const FILL_TO = 17000;
+    const FILL_TO = 18000;
+    const TEXT_AT = 19000;
     $("zoom-guess").hidden = t >= GUESS_UNTIL;
     $("zoom-viz").hidden = t < GUESS_UNTIL;
-    $("zoom-text").hidden = t < 18000;
-    ["zt-1", "zt-2", "zt-3"].forEach((id, i) => $(id).classList.toggle("on", t >= 18000 + i * 2500));
-    $("zoom-viz").classList.toggle("dim", t >= 18000);
+    $("zoom-text").hidden = t < TEXT_AT;
+    ["zt-1", "zt-2", "zt-3"].forEach((id, i) => $(id).classList.toggle("on", t >= TEXT_AT + i * 2500));
+    $("zoom-viz").classList.toggle("dim", t >= TEXT_AT);
 
     if (t >= GUESS_UNTIL && !once.has(`zoomin:${snap.phaseStartAt}`)) {
       once.add(`zoomin:${snap.phaseStartAt}`);
@@ -560,7 +571,7 @@
       once.add(`boom:${snap.phaseStartAt}`);
       SFX.boom();
     }
-    if (t >= 18000) setMusicFor("ZOOM");
+    if (t >= TEXT_AT) setMusicFor("ZOOM");
   }
 
   // --- end
@@ -591,7 +602,7 @@
   function loop() {
     requestAnimationFrame(loop);
     if (!snap) return;
-    const now = net.now();
+    const now = clock();
     const s = snap;
 
     // Phase progress bar (autopilot cue).
@@ -701,6 +712,10 @@
     SFX.unlock();
     net.send({ type: "host:next" });
   }
+  function pause() {
+    SFX.unlock();
+    net.send({ type: "host:pause" });
+  }
   function reset() {
     if (confirm(STR.resetConfirm)) {
       zoom = null;
@@ -725,6 +740,7 @@
 
   $("ctl-next").addEventListener("click", next);
   $("ctl-sound").addEventListener("click", toggleSound);
+  $("ctl-pause").addEventListener("click", pause);
   $("ctl-reset").addEventListener("click", reset);
   $("ctl-hide").addEventListener("click", () => toggleBar(true));
   $("ctl-show").addEventListener("click", () => toggleBar(false));
@@ -746,6 +762,10 @@
       case "PageDown": // presentation clickers
         e.preventDefault();
         next();
+        break;
+      case "p":
+      case "P":
+        pause();
         break;
       case "m":
       case "M":

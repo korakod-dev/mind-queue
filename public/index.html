@@ -16,6 +16,7 @@
     <div class="banner" id="banner" data-str="reconnecting" hidden></div>
     <canvas id="confetti" hidden></canvas>
     <div class="flash" id="flash" hidden></div>
+    <div class="paused-pill" id="paused" data-str="paused" hidden></div>
 
     <!-- first connect -->
     <section class="screen" id="s-boot">
@@ -68,18 +69,25 @@
       <p class="foul-msg" id="foul-msg" data-str="foulPhone" hidden></p>
     </section>
 
-    <!-- LINEUP / EVENTS / CALL (not the winner) -->
-    <section class="screen" id="s-queue" hidden>
-      <div class="urg-pill" id="q-urg"></div>
-      <div class="q-label" data-str="youPos"></div>
-      <div class="q-pos num" id="q-pos"></div>
-      <div class="q-move" id="q-move"></div>
-      <div class="q-info num" id="q-info"></div>
-      <div class="q-event" id="q-event"></div>
-      <div class="gamble" id="gamble" hidden>
-        <button class="g-btn move" id="g-move" data-str="gambleMove"></button>
-        <button class="g-btn stay" id="g-stay" data-str="gambleStay"></button>
+    <!-- LINEUP / EVENTS / CALL (not the winner): "look at the big screen" mode -->
+    <section class="screen look" id="s-queue" hidden>
+      <div class="look-up" id="look-up">
+        <div class="arrow">👆</div>
+        <div class="look-text" data-str="lookUp"></div>
+        <div class="look-sub" id="look-sub"></div>
       </div>
+      <div class="mini"><span class="urg-pill" id="q-urg"></span><span class="q-mini num" id="q-mini"></span></div>
+      <div class="q-sum" id="q-sum" hidden></div>
+      <div class="gamble-box" id="gamble-box" hidden>
+        <p class="big-msg small" data-str="ev_gamble_t"></p>
+        <p class="soft" data-str="ev_gamble_d"></p>
+        <div class="gamble">
+          <button class="g-btn move" id="g-move" data-str="gambleMove"></button>
+          <button class="g-btn stay" id="g-stay" data-str="gambleStay"></button>
+        </div>
+        <p class="tap-meta num" id="g-left"></p>
+      </div>
+      <p class="soft" id="g-chosen"></p>
       <div class="reacts"></div>
     </section>
 
@@ -104,8 +112,12 @@
     </section>
 
     <!-- ZOOM -->
-    <section class="screen" id="s-reveal" hidden>
-      <p class="big-msg" data-str="lookAtScreen"></p>
+    <section class="screen look" id="s-reveal" hidden>
+      <div class="look-up">
+        <div class="arrow">👆</div>
+        <div class="look-text" data-str="lookUp"></div>
+      </div>
+      <div class="q-sum" id="zoom-sum" hidden></div>
       <div class="reacts"></div>
     </section>
 

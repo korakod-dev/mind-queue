@@ -55,14 +55,16 @@ Both videos use procedurally generated background music, so there are no copyrig
 | 0 | LOBBY | Everyone scans the QR and picks a nickname + emoji (runs while people walk in) | host presses start |
 | 1 | INTRO | "หมอว่าง 1 คิว"; each phone flips a random, fictional patient card: 🔴 very urgent / 🟡 medium / 🟢 not urgent | 10 s |
 | 2 | RACE | Red light for a random 2.5–5 s, then green for 6 s. A press before green = false start (back of the queue). Queue order = arrival order of each player's **first** press after green; the big screen shows the top tappers to bait mashing | ~11 s |
-| 3 | LINEUP | Every emoji lines up at the exam-room door. Auto twist cards: fastest player, "most taps → queue #38", room total "but only the first tap counted", false starts | 15 s |
+| 3 | LINEUP | Every emoji lines up at the exam-room door. Auto twist cards: fastest player, "most taps → queue #38", room total "but only the first tap counted", false starts | 18 s |
 | 4 | EVENTS | Four queue events reshuffle the line live: 📄 documents incomplete (front 5 → back), 🏥 free slot at a far hospital (players opt in, 50/50 front or back), 🔀 queue system crash (10 swap), 📞 cancellation (someone from the back half → #1) | 40 s |
-| 5 | CALL | Drum roll → ding-dong "ขอเชิญหมายเลข 1" → the winner + 3-digit claim code (**the only prize**) → the line recolours by urgency: "seen: 🟢 · still waiting: 🔴 22" | 15 s |
+| 5 | CALL | Drum roll → ding-dong "ขอเชิญหมายเลข 1" → the winner + 3-digit claim code (**the only prize**) → the line recolours by urgency: "seen: 🟢 · still waiting: 🔴 22" | 20 s |
 | 6 | GUESS | "How many rooms like ours per psychiatrist?" 4 choices, live bar chart | 12 s |
-| 7 | ZOOM | Answer reveal → our room becomes 1 tile among ~1,166 → statistics + source | 28 s |
+| 7 | ZOOM | Answer reveal → our room becomes 1 tile among ~1,166 → statistics + source | 34 s |
 | 8 | END | "ระหว่างรอหมอ… เพื่อนดูแลกันได้ 💛", "ask your neighbour how they've been", hotline 1323; snacks passed along each row | — |
 
-Total after start ≈ 2:15. Phones can send emoji reactions (😱😂🙏💛) that float up on the big screen.
+Total after start ≈ 2:26. The host can pause at any moment with `P`.
+
+**Where players look.** Phones are rich only when there is something to do (patient card, race, gamble, guess). In the watch phases (LINEUP, EVENTS, CALL, ZOOM) the phone shows a bouncing "👆 ดูจอใหญ่", a small queue number and a buzz on each change, so eyes go to the big screen (Kahoot-style). Players who never look up still get the message: after the call and at the end the phone shows one summary line. Small emoji reaction buttons (😱😂🙏💛) at the bottom float up on the big screen.
 
 Presenter script and checklists: [`RUNSHEET.th.md`](RUNSHEET.th.md) (Thai). Snack-helper guide: [`helper-guide.html`](helper-guide.html).
 
@@ -92,7 +94,7 @@ RUNSHEET.th.md      presenter run sheet (Thai)
 | `/host?key=HOST_KEY` | presenter | key is moved to `sessionStorage` and removed from the address bar on load |
 | `/ws` | both | WebSocket; becomes host only if `hello.hostKey` matches the `HOST_KEY` secret |
 
-Host keys: `Space` / `→` / `PageDown` = start (in the lobby) or skip the current phase · `M` = sound on/off · `R` = reset (confirm) · `H` = hide control bar · `F` = fullscreen. Browsers only play audio after a gesture, so any key or click on the host page unlocks sound.
+Host keys: `Space` / `→` / `PageDown` = start (in the lobby) or skip the current phase · `P` = pause / resume · `M` = sound on/off · `R` = reset (confirm) · `H` = hide control bar · `F` = fullscreen. Browsers only play audio after a gesture, so any key or click on the host page unlocks sound.
 
 ## Setup
 
@@ -161,6 +163,7 @@ Sources: [DO pricing](https://developers.cloudflare.com/durable-objects/platform
 
 - **Server-authoritative state machine:** `LOBBY → INTRO → RACE → LINEUP → EVENTS → CALL → GUESS → ZOOM → END`. After the host starts, every phase runs on `config.timeline`; each phase starts exactly when the previous one was scheduled to end, so a late alarm never stretches the timeline. `host:next` skips the current phase. Every phase change and queue event sends a full per-client snapshot.
 - **Race:** `goAt` (the green light) is in the snapshot, so every phone turns green at the same server time. A `taps` message arriving before `goAt − foulGraceMs` is a false start; one inside the grace window is ignored. Queue order = server arrival order of each player's first tap after `goAt`, then players who never tapped (shuffled), then false starters. Client timestamps are never trusted.
+- **Pause:** `host:pause` stores `pausedAt`; while it is set, `tick` does nothing, taps/gamble/guess are ignored, no game alarm is armed, and clients render from `pausedAt` instead of the live clock (everything freezes, music stops). On resume every future timestamp (`phaseStartAt`, `phaseEndAt`, `goAt`, `raceEndAt`, the open gamble deadline, first taps) moves forward by the paused duration, so the rest of the timeline plays out unchanged.
 - **Events and winner:** the four events fire at `config.events.times` (slot 1 is always the gamble; the others are shuffled). The winner is queue #1 at CALL, skipping players with no live socket. Late joiners go to the back of the queue.
 - **Counters are cumulative:** `taps` carries a running total and the server keeps the max per player. Resends after a reconnect are therefore idempotent. The server also caps it at a plausible human rate.
 - **Clock sync:** clients measure their offset to the server clock with `time` requests and keep the sample with the lowest RTT. The red/green light, the call reveal and the zoom animation are drawn from server time, so a refresh lands on the same moment.
@@ -182,16 +185,18 @@ HOST_KEY=<prod key> node scripts/loadtest.mjs https://queue.korakod.dev
 
 Options: `--players 80` (default 80). Without a `HOST_KEY` env var it reads `.dev.vars`.
 
-It runs one host and N players through a full game on the real timeline (about 2 min 15 s). During the run:
+It runs one host and N players through a full game on the real timeline (about 2 min 30 s including the pause). During the run:
 
 - players tap ~10/s after the green light with 500 ms batching (first press sent at once);
 - two "early birds" press before the green light; ~10 % never tap;
 - ~10 % of players drop and reconnect during the race and the events;
-- half the players opt into the gamble; everyone answers the guess; some send reactions.
+- half the players opt into the gamble; everyone answers the guess; some send reactions;
+- the host pauses for 3 s during the events and resumes.
 
 It asserts:
 
 - the lineup is a permutation of all players, false starters at the very back and non-tappers just before them;
+- pause freezes the phase and events, and resume shifts the timeline by the paused time;
 - all four events fire and the gamble resolves with lucky + unlucky = movers;
 - exactly one winner: queue #1, the only phone with `won`, with the same claim code as the big screen;
 - every client ends in END;

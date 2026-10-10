@@ -89,6 +89,8 @@ interface GameState {
   winnerId: string | null;
   totalTaps: number;
   lastActivity: number;
+  /** Server ms when the host paused, or null. */
+  pausedAt: number | null;
 }
 
 /** Per-socket data that survives hibernation (serializeAttachment). */
@@ -126,6 +128,7 @@ function freshState(now: number): GameState {
     winnerId: null,
     totalTaps: 0,
     lastActivity: now,
+    pausedAt: null,
   };
 }
 
@@ -217,6 +220,7 @@ export class GameRoom extends DurableObject<Env> {
     ctx.blockConcurrencyWhile(async () => {
       const saved = await ctx.storage.get<GameState>(STATE_KEY);
       this.state = saved && saved.v === 2 ? saved : freshState(Date.now());
+      this.state.pausedAt ??= null; // states saved before pause existed
     });
   }
 
@@ -327,6 +331,8 @@ export class GameRoom extends DurableObject<Env> {
   private onPlayerMsg(ws: WebSocket, pid: string, msg: ClientMsg, now: number) {
     const s = this.state;
     const p = s.players[pid];
+    // Nothing counts while the host has paused the game (reactions still float up).
+    if (s.pausedAt !== null && (msg.type === "taps" || msg.type === "gamble" || msg.type === "guess")) return;
     switch (msg.type) {
       case "join": {
         const nickname = typeof msg.nickname === "string"
@@ -454,8 +460,18 @@ export class GameRoom extends DurableObject<Env> {
   private async onHostMsg(msg: ClientMsg, now: number) {
     switch (msg.type) {
       case "host:next":
-        // LOBBY → start; any timed phase → skip it. END is final.
-        if (this.state.phase !== "END") this.advance(now);
+        // LOBBY → start; any timed phase → skip it. END is final. Skipping also resumes.
+        if (this.state.phase !== "END") {
+          if (this.state.pausedAt !== null) this.resume(now);
+          this.advance(now);
+        }
+        return;
+      case "host:pause":
+        if (this.state.pausedAt !== null) this.resume(now);
+        else if (this.state.phaseEndAt !== null) {
+          this.state.pausedAt = now;
+          this.phaseChanged();
+        }
         return;
       case "host:reset":
         await this.wipe(now);
@@ -469,12 +485,32 @@ export class GameRoom extends DurableObject<Env> {
 
   /** Apply every time-based transition that is due at `now`. */
   private tick(now: number) {
+    if (this.state.pausedAt !== null) return; // the timeline is frozen
     for (let guard = 0; guard < PHASES.length + 1; guard++) {
       const s = this.state;
       if (s.phase === "EVENTS") this.fireDueEvents(Math.min(now, s.phaseEndAt ?? now));
       if (s.phaseEndAt === null || now < s.phaseEndAt) break;
       this.advance(s.phaseEndAt);
     }
+  }
+
+  /** Unfreeze: push every future timestamp back by the paused duration. */
+  private resume(now: number) {
+    const s = this.state;
+    if (s.pausedAt === null) return;
+    const d = now - s.pausedAt;
+    s.pausedAt = null;
+    const shift = (x: number | null) => (x === null ? null : x + d);
+    s.phaseStartAt = shift(s.phaseStartAt);
+    s.phaseEndAt = shift(s.phaseEndAt);
+    s.goAt = shift(s.goAt);
+    s.raceEndAt = shift(s.raceEndAt);
+    for (const e of s.events) {
+      if (e.decideUntil !== undefined && !e.resolved) e.decideUntil += d;
+    }
+    // goAt moved, so move first taps too: reaction times (firstAt − goAt) stay the same.
+    for (const p of Object.values(s.players)) if (p.firstAt !== null) p.firstAt += d;
+    this.phaseChanged();
   }
 
   /** Move to the next phase, starting it at `at`. */
@@ -649,7 +685,7 @@ export class GameRoom extends DurableObject<Env> {
   /** Next time-based event (ms) the alarm must wake us for, or null. */
   private nextGameEventAt(): number | null {
     const s = this.state;
-    if (s.phaseEndAt === null) return null;
+    if (s.phaseEndAt === null || s.pausedAt !== null) return null;
     const cands = [s.phaseEndAt];
     if (s.phase === "EVENTS" && s.phaseStartAt !== null) {
       const times = config.events.times;
@@ -831,6 +867,7 @@ export class GameRoom extends DurableObject<Env> {
       config: publicConfig,
       phaseStartAt: s.phaseStartAt,
       phaseEndAt: s.phaseEndAt,
+      pausedAt: s.pausedAt,
       goAt: s.goAt,
       raceEndAt: s.raceEndAt,
       joined,

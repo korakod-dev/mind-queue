@@ -44,6 +44,8 @@ export type ClientMsg =
   | { type: "react"; i: number }
   /** Start (LOBBY) or skip the current timed phase. */
   | { type: "host:next" }
+  /** Pause / resume the whole timeline. */
+  | { type: "host:pause" }
   | { type: "host:reset" };
 
 // ---------------------------------------------------------------- server → client
@@ -118,6 +120,8 @@ export interface Snapshot {
   /** Server ms. phaseEndAt is null for LOBBY and END. */
   phaseStartAt: number | null;
   phaseEndAt: number | null;
+  /** Server ms when the host paused, or null. While paused every clock-driven view freezes at this time. */
+  pausedAt: number | null;
   /** RACE: green light + end of tapping (server ms). */
   goAt: number | null;
   raceEndAt: number | null;
