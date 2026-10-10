@@ -43,10 +43,8 @@ Screenshots come from a local game with 45 bot players. The big screen is shown 
 
 ### Videos
 
-> The two videos still show the earlier 5-minute version (tap race → waiting room → line-by-line reveal).
-
-- [`media/how-to-play.mp4`](media/how-to-play.mp4): how to play from start to finish, using real screens with captions (83 s).
-- [`media/classroom-atmosphere.mp4`](media/classroom-atmosphere.mp4): animated preview of the classroom atmosphere for the helper and team (82 s, illustration, not real footage).
+- [`media/how-to-play.mp4`](media/how-to-play.mp4): how to play from start to finish: a recorded live game (big screen + phone side by side) with captions; long phases are sped up (1:53).
+- [`media/classroom-atmosphere.mp4`](media/classroom-atmosphere.mp4): animated preview of the classroom for the helper and team, with the recorded big screen on the projector and student reactions per phase (1:53, illustration, not real footage).
 
 Both videos use procedurally generated background music, so there are no copyright issues.
 
@@ -81,7 +79,7 @@ public/js/net.js    reconnecting WebSocket + server-clock sync (shared)
 public/js/strings.js  all Thai UI strings
 scripts/loadtest.mjs  80-player end-to-end load test
 docs/screenshots/   README screenshots
-media/              how-to-play + classroom-atmosphere videos (earlier version)
+media/              how-to-play + classroom-atmosphere videos
 helper-guide.html   snack-helper guide (Thai)
 RUNSHEET.th.md      presenter run sheet (Thai)
 ```
