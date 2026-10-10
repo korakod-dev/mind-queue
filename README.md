@@ -13,27 +13,37 @@ The presenter presses start once; every phase after that runs on a timer. The bi
 
 ## Screenshots
 
-> The screenshots and videos below show the earlier 5-minute version (tap race → waiting room with bubbles → line-by-line reveal). The current flow is in the table under **Game flow**.
-
 ### Big screen (projector)
 
-| Lobby: scan the QR | Race result + claim code |
+| Lobby: scan the QR | Intro: one slot, N patients |
 |---|---|
-| ![Lobby](docs/screenshots/host-lobby.jpg) | ![Result](docs/screenshots/host-result.jpg) |
-| **Waiting room: "now calling" board** | **Cancellation draw** |
-| ![Waiting room](docs/screenshots/host-waiting.jpg) | ![Draw](docs/screenshots/host-draw.jpg) |
-| **Reveal: the real numbers** | **End** |
-| ![Reveal](docs/screenshots/host-reveal.jpg) | ![End](docs/screenshots/host-end.jpg) |
+| ![Lobby](docs/screenshots/host-lobby.jpg) | ![Intro](docs/screenshots/host-intro.jpg) |
+| **Race: green light + top tappers + false starts** | **Lineup + auto twist cards** |
+| ![Race](docs/screenshots/host-race.jpg) | ![Lineup](docs/screenshots/host-lineup.jpg) |
+| **Event: far-away hospital gamble** | **Event: queue system crash** |
+| ![Gamble](docs/screenshots/host-gamble.jpg) | ![Crash](docs/screenshots/host-event.jpg) |
+| **Call: the winner + claim code, line coloured by urgency** | **Guess (live answers)** |
+| ![Call](docs/screenshots/host-call.jpg) | ![Guess](docs/screenshots/host-guess.jpg) |
+| **Zoom: answer reveal** | **Zoom: our room among ~1,000+ rooms** |
+| ![Zoom guess](docs/screenshots/host-zoom-guess.jpg) | ![Zoom](docs/screenshots/host-zoom.jpg) |
+| **Zoom: statistics** | **End** |
+| ![Zoom text](docs/screenshots/host-zoom-text.jpg) | ![End](docs/screenshots/host-end.jpg) |
 
 ### Phones
 
-| Join | Tap race | Queue ticket |
-|---|---|---|
-| ![Join](docs/screenshots/phone-join.jpg) | ![Tap race](docs/screenshots/phone-tap.jpg) | ![Ticket](docs/screenshots/phone-ticket.jpg) |
-| **Bubble pop** | **Breathe together** | **Winner + claim code** |
-| ![Bubbles](docs/screenshots/phone-bubbles.jpg) | ![Breathe](docs/screenshots/phone-breathe.jpg) | ![Winner](docs/screenshots/phone-win.jpg) |
+| Join | Patient card | Race | Queue position |
+|---|---|---|---|
+| ![Join](docs/screenshots/phone-join.jpg) | ![Card](docs/screenshots/phone-card.jpg) | ![Race](docs/screenshots/phone-tap.jpg) | ![Queue](docs/screenshots/phone-queue.jpg) |
+| **Gamble** | **Not called** | **Winner** | **Guess** |
+| ![Gamble](docs/screenshots/phone-gamble.jpg) | ![Not called](docs/screenshots/phone-call.jpg) | ![Winner](docs/screenshots/phone-win.jpg) | ![Guess](docs/screenshots/phone-guess.jpg) |
+| **End** | | | |
+| ![End](docs/screenshots/phone-end.jpg) | | | |
+
+Screenshots come from a local game with 45 bot players. The big screen is shown at 1600×900; on a 1080p projector everything scales up.
 
 ### Videos
+
+> The two videos still show the earlier 5-minute version (tap race → waiting room → line-by-line reveal).
 
 - [`media/how-to-play.mp4`](media/how-to-play.mp4): how to play from start to finish, using real screens with captions (83 s).
 - [`media/classroom-atmosphere.mp4`](media/classroom-atmosphere.mp4): animated preview of the classroom atmosphere for the helper and team (82 s, illustration, not real footage).
@@ -70,7 +80,7 @@ public/host.html    big screen (/host)     public/js/host.js, sfx.js (Web Audio 
 public/js/net.js    reconnecting WebSocket + server-clock sync (shared)
 public/js/strings.js  all Thai UI strings
 scripts/loadtest.mjs  80-player end-to-end load test
-docs/screenshots/   README screenshots (earlier version)
+docs/screenshots/   README screenshots
 media/              how-to-play + classroom-atmosphere videos (earlier version)
 helper-guide.html   snack-helper guide (Thai)
 RUNSHEET.th.md      presenter run sheet (Thai)
