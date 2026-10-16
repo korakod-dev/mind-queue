@@ -73,6 +73,7 @@
   } catch (_) {}
   let lobbyVoiceAt = Date.now() - 25000; // first lobby prompt ~5 s after audio is unlocked
   Voice.setMuted(SFX.muted);
+  Voice.load(["V12"]); // optional clip; never blocks or disables the voice-over
   Voice.load(VOICE_IDS).then((ok) => {
     voiceState = ok ? "ready" : "missing";
     syncVoice();
@@ -129,7 +130,8 @@
       case "ZOOM":
         return [["V10", at + 19000]];
       case "END":
-        return [["V11", at + 1000]];
+        // V12 is optional: Voice.play() just returns false when the file is not there.
+        return [["V11", at + 1000], ["V12", at + T.endSystemAtSec * 1000 + 500]];
     }
     return [];
   }
@@ -797,6 +799,17 @@
     }
 
     if (stage === "h-zoom") tickZoom(now);
+    if (stage === "h-end" && s.phaseStartAt) {
+      const sys = now >= s.phaseStartAt + s.config.timeline.endSystemAtSec * 1000;
+      if ($("end-b").hidden === sys) {
+        $("end-a").hidden = sys;
+        $("end-b").hidden = !sys;
+        if (sys && !once.has(`endsys:${s.phaseStartAt}`)) {
+          once.add(`endsys:${s.phaseStartAt}`);
+          SFX.whoosh();
+        }
+      }
+    }
     tickVoice(now);
   }
   requestAnimationFrame(loop);

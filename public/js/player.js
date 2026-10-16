@@ -171,6 +171,7 @@
       }
     }
     $("end-claim").hidden = !(you && you.won);
+    $("end-q").hidden = !(snap.phase === "END" && now >= snap.phaseStartAt + snap.config.timeline.endSystemAtSec * 1000);
     if (id === "s-guess") renderGuess();
     if (id === "s-reveal") renderZoom(now);
     $("paused").hidden = snap.pausedAt == null;
@@ -452,7 +453,7 @@
     // Time-based screen changes (call reveal, gamble window closing) without a new snapshot.
     if (now - lastScreenCheck > 200) {
       lastScreenCheck = now;
-      if (snap.phase === "CALL" || snap.phase === "EVENTS" || snap.phase === "ZOOM") render();
+      if (snap.phase === "CALL" || snap.phase === "EVENTS" || snap.phase === "ZOOM" || snap.phase === "END") render();
     }
   }
   requestAnimationFrame(loop);

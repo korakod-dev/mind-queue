@@ -60,7 +60,7 @@ Both videos use procedurally generated background music, so there are no copyrig
 | 5 | CALL | Drum roll → ding-dong "ขอเชิญหมายเลข 1" → the winner + 3-digit claim code (**the only prize**) → the line recolours by urgency: "seen: 🟢 · still waiting: 🔴 22" | 20 s |
 | 6 | GUESS | "How many rooms like ours per psychiatrist?" 4 choices, live bar chart | 12 s |
 | 7 | ZOOM | Answer reveal → our room becomes 1 tile among ~1,166 → statistics + source | 34 s |
-| 8 | END | "ระหว่างรอหมอ… เพื่อนดูแลกันได้ 💛", "ask your neighbour how they've been", hotline 1323; snacks passed along each row | — |
+| 8 | END | First 15 s: "ระหว่างรอหมอ… เพื่อนดูแลกันได้ 💛", "ask your neighbour how they've been", hotline 1323; snacks passed along each row. Then the closing message that leads into the talk: why psychiatrists are scarce (few graduates each year, heavy workload pushes many out of the public system, so even fewer remain while many people need care) and "is it time we looked after psychiatrists and kept them in the system?" (no numbers: none are sourced) | — |
 
 Total after start ≈ 2:26 without voice-over, ≈ 2:46 with it. The host can pause at any moment with `P`.
 

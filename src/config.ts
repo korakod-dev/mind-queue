@@ -25,6 +25,8 @@ export const config = {
     callRevealMs: 2600,
     guessSec: 12,
     zoomSec: 34,
+    /** END: the warm close (friends, snacks, V11) shows first; the psychiatrist-retention message replaces it after this. */
+    endSystemAtSec: 15,
   },
 
   /**
@@ -36,6 +38,7 @@ export const config = {
     clipMs: {
       V00: 9036, V01: 8497, V02: 5200, V03: 9685, V04: 4100, V05: 3700,
       V06: 5100, V07: 2670, V08: 8273, V09: 3700, V10: 8532, V11: 13721,
+      // V12 (retention message at the end) is optional: it plays if public/voice/V12.m4a exists.
     } as Record<string, number>,
     holdPadMs: 300,
     /** V08 starts this long after the winner is revealed (after the summary line appears). */

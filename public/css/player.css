@@ -513,6 +513,18 @@ body {
 
 /* ---------------------------------------------------------------- end */
 
+.end-q-phone {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.5;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  animation: pop 0.5s ease-out;
+}
+
 .hotline {
   margin-top: 8px;
   font-weight: 700;
