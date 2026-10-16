@@ -8,7 +8,7 @@
  *   messages (joined / online / taps / top tappers / false starts / reactions / guesses).
  * - Timed effects (green light, call reveal, zoom timeline) are driven by the synced server
  *   clock, so a refresh lands on the same moment.
- * - Keyboard: Space or → = start / skip phase, P = pause / resume, V = voice-over on/off (lobby), M = sound on/off, R = reset (confirm),
+ * - Keyboard: Space or → = start / skip phase, P = pause / resume, M = sound on/off, R = reset (confirm),
  *   H = hide bar, F = fullscreen. Any key or click also unlocks audio.
  */
 (function () {
@@ -62,103 +62,6 @@
       if (code === 4003) showBadKey();
     },
   });
-
-  // ------------------------------------------------------------ voice-over
-  const VOICE_IDS = ["V00", "V01", "V02", "V03", "V04", "V05", "V06", "V07", "V08", "V09", "V10", "V11"];
-  const VOICE_KEY = "mq.voice";
-  let voiceState = "loading"; // "loading" | "ready" | "missing"
-  let voiceWanted = true;
-  try {
-    voiceWanted = localStorage.getItem(VOICE_KEY) !== "0";
-  } catch (_) {}
-  let lobbyVoiceAt = Date.now() - 25000; // first lobby prompt ~5 s after audio is unlocked
-  Voice.setMuted(SFX.muted);
-  Voice.load(["V12"]); // optional clip; never blocks or disables the voice-over
-  Voice.load(VOICE_IDS).then((ok) => {
-    voiceState = ok ? "ready" : "missing";
-    syncVoice();
-  });
-
-  /** Keep the server's voice flag in line with the presenter's choice (lobby only). */
-  function syncVoice() {
-    const btn = $("voice-toggle");
-    btn.disabled = voiceState !== "ready";
-    btn.classList.toggle("off", !voiceWanted);
-    btn.textContent =
-      voiceState === "loading" ? STR.voiceLoading : voiceState === "missing" ? STR.voiceMissing : voiceWanted ? STR.voiceOn : STR.voiceOff;
-    const want = voiceState === "ready" && voiceWanted;
-    if (snap && snap.phase === "LOBBY" && snap.voice !== want) net.send({ type: "host:voice", on: want });
-  }
-
-  function toggleVoice() {
-    if (voiceState !== "ready" || !snap || snap.phase !== "LOBBY") return;
-    voiceWanted = !voiceWanted;
-    try {
-      localStorage.setItem(VOICE_KEY, voiceWanted ? "1" : "0");
-    } catch (_) {}
-    if (!voiceWanted) Voice.stop();
-    syncVoice();
-  }
-
-  /** When each clip plays (server time), for the current snapshot. Hold clips match the server's extra time. */
-  function voiceCues() {
-    const s = snap;
-    const T = s.config.timeline;
-    const V = s.config.voice;
-    const at = s.phaseStartAt;
-    switch (s.phase) {
-      case "INTRO":
-        return [["V01", at + 300]];
-      case "RACE":
-        return [["V02", at + 200]];
-      case "LINEUP":
-        return [["V03", at + 6000]];
-      case "EVENTS": {
-        const cues = [["V04", at + 200], ["V06", at + T.eventsSec * 1000]];
-        const g = s.events.find((e) => e.kind === "gamble");
-        if (g) cues.push(["V05", g.at + 300]);
-        return cues;
-      }
-      case "CALL": {
-        const reveal = at + T.callRevealMs;
-        const cues = [["V08", reveal + V.callSummaryDelayMs]];
-        if (s.winner && s.winner.pos === 1) cues.push(["V07", reveal + 1300]);
-        return cues;
-      }
-      case "GUESS":
-        return [["V09", at + 200]];
-      case "ZOOM":
-        return [["V10", at + 19000]];
-      case "END":
-        // V12 is optional: Voice.play() just returns false when the file is not there.
-        return [["V11", at + 1000], ["V12", at + T.endSystemAtSec * 1000 + 500]];
-    }
-    return [];
-  }
-
-  function tickVoice(now) {
-    if (!snap || !snap.voice || voiceState !== "ready" || !SFX.unlocked) return;
-    if (snap.pausedAt != null) {
-      Voice.pause();
-      return;
-    }
-    Voice.resume();
-    if (snap.phase === "LOBBY") {
-      const every = snap.config.voice.lobbyEverySec * 1000;
-      if (!Voice.playing && Date.now() - lobbyVoiceAt > every) {
-        lobbyVoiceAt = Date.now() + snap.config.voice.clipMs.V00;
-        Voice.play("V00");
-      }
-      return;
-    }
-    for (const [id, at] of voiceCues()) {
-      const k = `voice:${id}:${at}`;
-      if (now >= at && !once.has(k)) {
-        once.add(k);
-        if (now - at < 1500) Voice.play(id); // never start a clip late (e.g. after a refresh)
-      }
-    }
-  }
 
   function showBadKey() {
     try {
@@ -281,11 +184,7 @@
     }
     if (s.phase !== "EVENTS") seenEvents = s.events.length;
 
-    if (entered && prev) {
-      Voice.stop(); // clips are timed to end inside their phase; a skip cuts them
-      onEnterPhase(s.phase);
-    }
-    syncVoice();
+    if (entered && prev) onEnterPhase(s.phase);
     setMusicFor(s.phase);
 
     $("paused").hidden = s.pausedAt == null;
@@ -521,6 +420,7 @@
       if (ev.kind === "docs") desc = fmt(desc, { n: ev.moves.length || s.config.events.docsBack });
       if (ev.kind === "crash") desc = fmt(desc, { n: s.config.events.crashShuffle });
       card.append(el("div", "ev-d", desc));
+      card.append(el("div", "ev-real", STR[`ev_${ev.kind}_r`]));
       if (ev.kind === "gamble") {
         const g = el("div", "ev-g num");
         g.id = "gamble-line";
@@ -772,9 +672,7 @@
           renderLine();
           if (s.winner) {
             SFX.dingdong();
-            // The recorded V07 says "number one"; otherwise use the machine voice.
-            const recorded = s.voice && voiceState === "ready" && s.winner.pos === 1;
-            if (!recorded) setTimeout(() => SFX.say(fmt(STR.callSay, { n: s.winner.pos })), 1300);
+            setTimeout(() => SFX.say(fmt(STR.callSay, { n: s.winner.pos })), 1300);
             setTimeout(() => SFX.fanfare(), 600);
             confetti($("confetti"), 3500);
           }
@@ -810,7 +708,6 @@
         }
       }
     }
-    tickVoice(now);
   }
   requestAnimationFrame(loop);
 
@@ -840,7 +737,6 @@
   function toggleSound() {
     SFX.unlock();
     SFX.setMuted(!SFX.muted);
-    Voice.setMuted(SFX.muted);
     if (!SFX.muted && snap) setMusicFor(snap.phase);
     renderLiveText();
   }
@@ -856,7 +752,6 @@
 
   $("ctl-next").addEventListener("click", next);
   $("ctl-sound").addEventListener("click", toggleSound);
-  $("voice-toggle").addEventListener("click", toggleVoice);
   $("ctl-pause").addEventListener("click", pause);
   $("ctl-reset").addEventListener("click", reset);
   $("ctl-hide").addEventListener("click", () => toggleBar(true));
@@ -883,10 +778,6 @@
       case "p":
       case "P":
         pause();
-        break;
-      case "v":
-      case "V":
-        toggleVoice();
         break;
       case "m":
       case "M":

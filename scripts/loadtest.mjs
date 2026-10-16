@@ -15,7 +15,6 @@
  *  - ~10 % of players disconnect and reconnect (same playerId) during RACE and EVENTS
  *  - EVENTS: about half the players answer "move" to the gamble
  *  - GUESS: every player picks a random answer; players send a few reactions
- *  - the host turns the voice-over on in the lobby (longer hold phases are checked)
  *  - the host pauses for 3 s during EVENTS, then resumes
  *
  * Asserts
@@ -253,15 +252,11 @@ async function main() {
   const tappers = players.slice(2 + idle.length);
   const droppers = tappers.filter((_, i) => i % 10 === 3);
 
-  // Voice-over on: the three hold phases get longer by their clips.
-  host.send({ type: "host:voice", on: true });
-  await waitFor(() => host.snap.voice === true, 3000, "voice on");
   host.send({ type: "host:next" });
   await waitFor(() => host.snap.phase === "INTRO", 5000, "INTRO");
   log("INTRO");
   await waitFor(() => host.snap.phase === "RACE", 15000, "RACE");
   const { goAt, raceEndAt } = host.snap;
-  const raceLead = goAt - host.snap.phaseStartAt;
   log(`RACE · green in ${goAt - host.serverNow()} ms`);
 
   const raceJobs = [
@@ -279,7 +274,6 @@ async function main() {
 
   await waitFor(() => host.snap.phase === "EVENTS", 20000, "EVENTS");
   log("EVENTS");
-  const eventsLen = host.snap.phaseEndAt - host.snap.phaseStartAt;
   const movers = new Set();
   // Wait for the gamble, answer, and drop some sockets meanwhile.
   await waitFor(() => host.snap.events.some((e) => e.kind === "gamble"), 15000, "gamble event");
@@ -308,7 +302,6 @@ async function main() {
   await waitFor(() => host.snap.phase === "CALL", 50000, "CALL");
   log("CALL");
   const call = host.snap;
-  const callLen = call.phaseEndAt - call.phaseStartAt;
 
   await waitFor(() => host.snap.phase === "GUESS", 30000, "GUESS");
   log("GUESS");
@@ -340,10 +333,6 @@ async function main() {
   check(idleBlock.every((e) => idleNames.has(e.nickname)), "non-tappers sit right before the false starters");
   check(lineup.stats.tappers === tappers.length, `every tapper got a valid first tap (${lineup.stats.tappers}/${tappers.length})`);
 
-  const V = end.config.voice, T = end.config.timeline, hold = (id) => V.clipMs[id] + V.holdPadMs;
-  check(raceLead >= T.leadMs + hold("V02") + T.redLightMs[0] && raceLead <= T.leadMs + hold("V02") + T.redLightMs[1], `voice: red light waits for V02 (${raceLead} ms)`);
-  check(eventsLen === T.eventsSec * 1000 + hold("V06"), `voice: events last ${eventsLen} ms (+V06)`);
-  check(callLen === T.callSec * 1000 + hold("V08"), `voice: call lasts ${callLen} ms (+V08)`);
   check(frozen, "pause froze the phase and the events");
   check(pauseShift >= 2900 && pauseShift <= 4500, `resume shifted the timeline by the paused time (${pauseShift} ms)`);
   check(call.events.length === 4, "all four events fired");

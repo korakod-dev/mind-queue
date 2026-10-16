@@ -247,11 +247,6 @@
       music(next);
     },
     setMuted,
-    /** Lower the background music while the voice-over speaks. */
-    duck(on) {
-      if (!ctx || !musicGain) return;
-      musicGain.gain.setTargetAtTime(on ? 0.07 : 0.32, ctx.currentTime, 0.15);
-    },
   });
   // Live getters (Object.assign would copy their values once and freeze them).
   Object.defineProperties(window.SFX, {

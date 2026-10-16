@@ -186,30 +186,6 @@ body {
   background: linear-gradient(90deg, var(--teal), var(--peach));
 }
 
-/* Voice-over toggle (lobby) */
-.voice-toggle {
-  align-self: center;
-  font-size: var(--small);
-  font-weight: 700;
-  padding: 0.8vh 1.6vw;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 3px solid var(--teal);
-  color: var(--teal-strong);
-  box-shadow: var(--shadow);
-}
-
-.voice-toggle.off {
-  border-color: var(--line);
-  color: var(--ink-soft);
-}
-
-.voice-toggle:disabled {
-  border-color: var(--line);
-  color: var(--ink-soft);
-  cursor: default;
-}
-
 /* Pause badge */
 .paused-badge {
   position: fixed;
@@ -632,6 +608,18 @@ body {
   font-size: var(--mid);
   color: var(--ink-soft);
   font-weight: 600;
+}
+
+/* "In real life" line: the access barrier behind each event */
+.ev-real {
+  display: inline-block;
+  margin-top: 1vh;
+  font-size: var(--small);
+  font-weight: 700;
+  color: #7a4b00;
+  background: #fff3d6;
+  border-radius: 999px;
+  padding: 0.4vh 1.2vw;
 }
 
 .ev-g {

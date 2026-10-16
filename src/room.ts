@@ -91,8 +91,6 @@ interface GameState {
   lastActivity: number;
   /** Server ms when the host paused, or null. */
   pausedAt: number | null;
-  /** Voice-over on (chosen in the lobby). */
-  voice: boolean;
 }
 
 /** Per-socket data that survives hibernation (serializeAttachment). */
@@ -131,7 +129,6 @@ function freshState(now: number): GameState {
     totalTaps: 0,
     lastActivity: now,
     pausedAt: null,
-    voice: false,
   };
 }
 
@@ -224,7 +221,6 @@ export class GameRoom extends DurableObject<Env> {
       const saved = await ctx.storage.get<GameState>(STATE_KEY);
       this.state = saved && saved.v === 2 ? saved : freshState(Date.now());
       this.state.pausedAt ??= null; // states saved before pause existed
-      this.state.voice ??= false;
     });
   }
 
@@ -477,12 +473,6 @@ export class GameRoom extends DurableObject<Env> {
           this.phaseChanged();
         }
         return;
-      case "host:voice":
-        if (this.state.phase === "LOBBY" && typeof msg.on === "boolean" && msg.on !== this.state.voice) {
-          this.state.voice = msg.on;
-          this.phaseChanged();
-        }
-        return;
       case "host:reset":
         await this.wipe(now);
         return;
@@ -540,8 +530,7 @@ export class GameRoom extends DurableObject<Env> {
         s.phaseEndAt = at + T.introSec * 1000;
         break;
       case "RACE":
-        // Voice: V02 (the rules) plays first; the red light counts after it.
-        s.goAt = at + T.leadMs + this.holdMs("V02") + randInt(T.redLightMs[0], T.redLightMs[1]);
+        s.goAt = at + T.leadMs + randInt(T.redLightMs[0], T.redLightMs[1]);
         s.raceEndAt = s.goAt + T.frenzySec * 1000;
         s.phaseEndAt = s.raceEndAt + T.raceTailMs;
         break;
@@ -553,12 +542,12 @@ export class GameRoom extends DurableObject<Env> {
         const others = shuffle<EventKind>(["docs", "crash", "cancel"]);
         s.eventOrder = [others[0], "gamble", others[1], others[2]];
         s.events = [];
-        s.phaseEndAt = at + T.eventsSec * 1000 + this.holdMs("V06"); // V06 sums up the waiting room
+        s.phaseEndAt = at + T.eventsSec * 1000;
         break;
       }
       case "CALL":
         this.pickWinner();
-        s.phaseEndAt = at + T.callSec * 1000 + this.holdMs("V08"); // V08: the core message
+        s.phaseEndAt = at + T.callSec * 1000;
         break;
       case "GUESS":
         s.phaseEndAt = at + T.guessSec * 1000;
@@ -576,12 +565,6 @@ export class GameRoom extends DurableObject<Env> {
   private phaseChanged() {
     this.stateChanged = true;
     this.persistSoon(true);
-  }
-
-  /** Extra time a hold clip adds to its phase (0 when voice is off). */
-  private holdMs(id: string): number {
-    if (!this.state.voice) return 0;
-    return (config.voice.clipMs[id] ?? 0) + config.voice.holdPadMs;
   }
 
   /** Queue = valid tappers by arrival order, then players who never tapped, then false starts. */
@@ -885,7 +868,6 @@ export class GameRoom extends DurableObject<Env> {
       phaseStartAt: s.phaseStartAt,
       phaseEndAt: s.phaseEndAt,
       pausedAt: s.pausedAt,
-      voice: s.voice,
       goAt: s.goAt,
       raceEndAt: s.raceEndAt,
       joined,
