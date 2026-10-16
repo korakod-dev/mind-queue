@@ -46,6 +46,8 @@ export type ClientMsg =
   | { type: "host:next" }
   /** Pause / resume the whole timeline. */
   | { type: "host:pause" }
+  /** Voice-over on/off (lobby only). The host sends on only when every clip loaded. */
+  | { type: "host:voice"; on: boolean }
   | { type: "host:reset" };
 
 // ---------------------------------------------------------------- server → client
@@ -120,6 +122,8 @@ export interface Snapshot {
   /** Server ms. phaseEndAt is null for LOBBY and END. */
   phaseStartAt: number | null;
   phaseEndAt: number | null;
+  /** Voice-over is on: RACE, EVENTS and CALL are longer by their hold clips (see config.voice). */
+  voice: boolean;
   /** Server ms when the host paused, or null. While paused every clock-driven view freezes at this time. */
   pausedAt: number | null;
   /** RACE: green light + end of tapping (server ms). */

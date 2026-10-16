@@ -62,7 +62,9 @@ Both videos use procedurally generated background music, so there are no copyrig
 | 7 | ZOOM | Answer reveal → our room becomes 1 tile among ~1,166 → statistics + source | 34 s |
 | 8 | END | "ระหว่างรอหมอ… เพื่อนดูแลกันได้ 💛", "ask your neighbour how they've been", hotline 1323; snacks passed along each row | — |
 
-Total after start ≈ 2:26. The host can pause at any moment with `P`.
+Total after start ≈ 2:26 without voice-over, ≈ 2:46 with it. The host can pause at any moment with `P`.
+
+**Voice-over (replaces the MC).** Twelve recorded clips in `public/voice/` (script: [`VOICEOVER-SCRIPT.md`](VOICEOVER-SCRIPT.md)) play from the big screen at fixed moments of each phase, with the music ducked underneath. Three of them are holds: when voice is on, the server makes RACE (before the red light), EVENTS (end) and CALL (after the summary) longer by that clip's length from `config.voice.clipMs`, so nothing moves on while it speaks. The presenter turns voice on/off in the lobby (button or `V`); the host page only enables it when every clip has loaded, otherwise the game runs exactly as before. The recorded "ขอเชิญหมายเลขหนึ่ง" replaces the machine voice when the winner is queue #1.
 
 **Where players look.** Phones are rich only when there is something to do (patient card, race, gamble, guess). In the watch phases (LINEUP, EVENTS, CALL, ZOOM) the phone shows a bouncing "👆 ดูจอใหญ่", a small queue number and a buzz on each change, so eyes go to the big screen (Kahoot-style). Players who never look up still get the message: after the call and at the end the phone shows one summary line. Small emoji reaction buttons (😱😂🙏💛) at the bottom float up on the big screen.
 
@@ -76,7 +78,8 @@ src/room.ts         GameRoom Durable Object: state machine, sockets, alarms, per
 src/protocol.ts     WebSocket message + snapshot types (the protocol reference)
 src/config.ts       every number in the game (+ stats source)
 public/index.html   player page            public/js/player.js, confetti.js
-public/host.html    big screen (/host)     public/js/host.js, sfx.js (Web Audio music/SFX + Thai TTS)
+public/host.html    big screen (/host)     public/js/host.js, sfx.js (Web Audio music/SFX + Thai TTS), voice.js
+public/voice/       recorded voice-over clips V00–V11 (see VOICEOVER-SCRIPT.md)
 public/js/net.js    reconnecting WebSocket + server-clock sync (shared)
 public/js/strings.js  all Thai UI strings
 scripts/loadtest.mjs  80-player end-to-end load test
@@ -94,7 +97,7 @@ RUNSHEET.th.md      presenter run sheet (Thai)
 | `/host?key=HOST_KEY` | presenter | key is moved to `sessionStorage` and removed from the address bar on load |
 | `/ws` | both | WebSocket; becomes host only if `hello.hostKey` matches the `HOST_KEY` secret |
 
-Host keys: `Space` / `→` / `PageDown` = start (in the lobby) or skip the current phase · `P` = pause / resume · `M` = sound on/off · `R` = reset (confirm) · `H` = hide control bar · `F` = fullscreen. Browsers only play audio after a gesture, so any key or click on the host page unlocks sound.
+Host keys: `Space` / `→` / `PageDown` = start (in the lobby) or skip the current phase · `V` = voice-over on/off (lobby) · `P` = pause / resume · `M` = sound on/off · `R` = reset (confirm) · `H` = hide control bar · `F` = fullscreen. Browsers only play audio after a gesture, so any key or click on the host page unlocks sound.
 
 ## Setup
 
@@ -191,11 +194,13 @@ It runs one host and N players through a full game on the real timeline (about 2
 - two "early birds" press before the green light; ~10 % never tap;
 - ~10 % of players drop and reconnect during the race and the events;
 - half the players opt into the gamble; everyone answers the guess; some send reactions;
+- the host turns the voice-over on in the lobby;
 - the host pauses for 3 s during the events and resumes.
 
 It asserts:
 
 - the lineup is a permutation of all players, false starters at the very back and non-tappers just before them;
+- with voice on, the red light waits for V02 and EVENTS/CALL are longer by exactly V06/V08;
 - pause freezes the phase and events, and resume shifts the timeline by the paused time;
 - all four events fire and the gamble resolves with lucky + unlucky = movers;
 - exactly one winner: queue #1, the only phone with `won`, with the same claim code as the big screen;

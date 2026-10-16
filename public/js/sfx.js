@@ -247,12 +247,16 @@
       music(next);
     },
     setMuted,
-    get muted() {
-      return muted;
+    /** Lower the background music while the voice-over speaks. */
+    duck(on) {
+      if (!ctx || !musicGain) return;
+      musicGain.gain.setTargetAtTime(on ? 0.07 : 0.32, ctx.currentTime, 0.15);
     },
-    get unlocked() {
-      return !!ctx;
-    },
+  });
+  // Live getters (Object.assign would copy their values once and freeze them).
+  Object.defineProperties(window.SFX, {
+    muted: { get: () => muted },
+    unlocked: { get: () => !!ctx },
   });
 
   // Music requested before unlock starts as soon as audio is unlocked.

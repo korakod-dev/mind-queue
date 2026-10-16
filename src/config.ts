@@ -27,6 +27,23 @@ export const config = {
     zoomSec: 34,
   },
 
+  /**
+   * Recorded voice-over (public/voice/V00–V11.m4a, see VOICEOVER-SCRIPT.md). Lengths in ms of the
+   * trimmed files. When the host turns voice on, the three hold clips lengthen their phase by
+   * their own length + holdPadMs, so nothing on screen moves on while they play.
+   */
+  voice: {
+    clipMs: {
+      V00: 9000, V01: 8400, V02: 5200, V03: 9600, V04: 4100, V05: 3700,
+      V06: 5100, V07: 2665, V08: 8200, V09: 3700, V10: 8500, V11: 13700,
+    } as Record<string, number>,
+    holdPadMs: 300,
+    /** V08 starts this long after the winner is revealed (after the summary line appears). */
+    callSummaryDelayMs: 5000,
+    /** Lobby prompt (V00) repeats this often. */
+    lobbyEverySec: 30,
+  },
+
   /** Taps arriving this close before the green light are ignored instead of counted as a false start. */
   foulGraceMs: 150,
 
@@ -100,6 +117,7 @@ export type Config = typeof config;
 export const publicConfig = {
   expectedPlayers: config.expectedPlayers,
   timeline: config.timeline,
+  voice: config.voice,
   events: config.events,
   guessBuckets: config.guessBuckets,
   stats: config.stats,

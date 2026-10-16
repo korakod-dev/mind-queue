@@ -34,6 +34,7 @@
         <h1 class="h-title" data-str="joinTitle"></h1>
         <p class="h-sub" data-str="lobbyHint"></p>
         <div class="joined num" id="joined"></div>
+        <button class="voice-toggle" id="voice-toggle" type="button"></button>
         <div class="emoji-wall" id="emoji-wall"></div>
       </div>
     </section>
@@ -104,7 +105,7 @@
       <div class="footer" data-str="hotline"></div>
     </section>
 
-    <!-- presenter controls: Space/→ start or skip · P pause · M sound · R reset · H hide · F fullscreen -->
+    <!-- presenter controls: Space/→ start or skip · P pause · V voice-over (lobby) · M sound · R reset · H hide · F fullscreen -->
     <div class="ctl" id="ctl">
       <span class="info num" id="ctl-info"></span>
       <button class="primary" id="ctl-next"></button>
@@ -121,6 +122,7 @@
     <script src="/js/net.js"></script>
     <script src="/js/confetti.js"></script>
     <script src="/js/sfx.js"></script>
+    <script src="/js/voice.js"></script>
     <script src="/js/host.js"></script>
   </body>
 </html>
