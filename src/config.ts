@@ -7,7 +7,7 @@
 export const config = {
   expectedPlayers: 67,
 
-  /** Every phase after LOBBY runs on these timers (~2:38 in total). The host can pause with P. */
+  /** Every phase after LOBBY runs on these timers (~2:39 in total). The host can pause with P. */
   timeline: {
     introSec: 10,
     /** Lead so the RACE snapshot reaches every phone before the red light counts. */
@@ -19,7 +19,7 @@ export const config = {
     /** Late tap batches still count toward the totals for this long after the race. */
     raceTailMs: 700,
     lineupSec: 18,
-    eventsSec: 52,
+    eventsSec: 53,
     callSec: 20,
     /** CALL: drum roll first; the winner is revealed this long after CALL starts. */
     callRevealMs: 2600,
@@ -35,10 +35,11 @@ export const config = {
   events: {
     /**
      * Seconds after EVENTS starts. Slot 1 is always the gamble; the other kinds are shuffled.
-     * The title reads for 4 s; each card then stays ~9–11 s (gamble: 7 s to choose + 10 s result).
+     * The title reads for 4 s; cards stay ~9–10 s. The gamble gets 12 s to choose (read the screen,
+     * look down at the phone, decide) + 8 s to show the result.
      */
-    times: [4, 13, 30, 41],
-    gambleDecideSec: 7,
+    times: [4, 13, 33, 43],
+    gambleDecideSec: 12,
     /** 📄 "Documents incomplete": queue #1..docsBack go to the back. */
     docsBack: 5,
     /** 🔀 "Queue system crashed": this many random people swap places. */

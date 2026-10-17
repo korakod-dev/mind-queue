@@ -286,7 +286,7 @@ async function main() {
   await Promise.all(droppers.map((p) => sleep(rand(0, 2000)).then(() => p.dropAndReconnect(rand(200, 800)))));
 
   // Pause for 3 s once the gamble has resolved: nothing may advance, then everything shifts.
-  await waitFor(() => host.snap.events.some((e) => e.kind === "gamble" && e.resolved), 15000, "gamble resolved");
+  await waitFor(() => host.snap.events.some((e) => e.kind === "gamble" && e.resolved), 20000, "gamble resolved");
   const endBefore = host.snap.phaseEndAt;
   const eventsBefore = host.snap.events.length;
   host.send({ type: "host:pause" });
