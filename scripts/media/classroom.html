@@ -1,0 +1,140 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+const C = document.getElementById("c"), X = C.getContext("2d");
+let SEGS, MARKS, STARTS = [], CAPS;
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const SHIRTS = ["#7fd6c9", "#f6b48c", "#f7d488", "#e98aa2", "#9cc5f0", "#b9a3e3", "#a8d98a", "#f2a7a0", "#8fb8a8", "#e0c08f"];
+const HAIR = ["#2b211c", "#3b2a20", "#1d1a19", "#5a3b26", "#2f2622", "#6b4a33"];
+const students = [];
+const ROWS = [{ y: 592, s: 0.62, n: 8 }, { y: 652, s: 0.73, n: 8 }, { y: 722, s: 0.86, n: 7 }, { y: 802, s: 1.0, n: 7 }, { y: 890, s: 1.15, n: 6 }];
+ROWS.forEach((r, ri) => { for (const side of [-1, 1]) for (let k = 0; k < r.n; k++) {
+  const gap = 64 * r.s * 1.45, x = 960 + side * (95 * r.s + k * gap + gap / 2) + (rnd() - 0.5) * 10;
+  students.push({ x, y: r.y + (rnd() - 0.5) * 6, s: r.s, row: ri, side, k, shirt: SHIRTS[(rnd() * SHIRTS.length) | 0], hair: HAIR[(rnd() * HAIR.length) | 0], ph: rnd() * 6.28, joinAt: rnd(), long: rnd() < 0.35 });
+} });
+students.sort((a, b) => a.y - b.y);
+const S = (r, side, k) => students.find((s) => s.row === r && s.side === side && s.k === k) || students[0];
+const winner = S(2, 1, 2), fouls = [S(1, -1, 3), S(3, 1, 4)];
+function rr(x, y, w, h, r, fill) { X.beginPath(); X.roundRect(x, y, w, h, r); X.fillStyle = fill; X.fill(); }
+function pill(txt, x, y, size, bg, fg) { X.font = `700 ${size}px Prompt`; const w = X.measureText(txt).width + size * 1.2; rr(x - w / 2, y - size * 0.85, w, size * 1.6, size * 0.8, bg); X.fillStyle = fg; X.textAlign = "center"; X.textBaseline = "middle"; X.fillText(txt, x, y - size * 0.05); }
+function bubble(txt, x, y, size, alpha = 1) {
+  X.save(); X.globalAlpha = alpha; X.font = `700 ${size}px Prompt`;
+  const w = X.measureText(txt).width + size * 1.1, h = size * 1.7;
+  X.shadowColor = "rgba(0,0,0,.18)"; X.shadowBlur = 10; rr(x - w / 2, y - h, w, h, h / 2, "#fff"); X.shadowBlur = 0;
+  X.beginPath(); X.moveTo(x - 8, y - 2); X.lineTo(x + 8, y - 2); X.lineTo(x, y + 12); X.fillStyle = "#fff"; X.fill();
+  X.fillStyle = "#23403d"; X.textAlign = "center"; X.textBaseline = "middle"; X.fillText(txt, x, y - h / 2); X.restore();
+}
+function person(x, y, s, shirt, skin, hair, opts = {}) {
+  X.save(); X.translate(x, y); X.scale(s, s);
+  rr(-34, 40, 68, 120, 26, shirt);
+  if (opts.point) { X.save(); X.translate(30, 60); X.rotate(-0.9); rr(0, -8, 70, 18, 9, shirt); X.restore(); }
+  if (opts.carry) { X.font = "40px sans-serif"; X.textAlign = "center"; X.fillText("🎁", 46, 70); }
+  rr(-24, 155, 20, 70, 9, "#3c4a5a"); rr(4, 155, 20, 70, 9, "#3c4a5a");
+  X.beginPath(); X.arc(0, 0, 30, 0, 7); X.fillStyle = skin; X.fill();
+  X.beginPath(); X.arc(0, -8, 31, Math.PI, 0); X.fillStyle = hair; X.fill();
+  X.fillStyle = "#23403d"; X.beginPath(); X.arc(-10, 4, 3.5, 0, 7); X.arc(10, 4, 3.5, 0, 7); X.fill();
+  X.beginPath(); X.arc(0, 12, 9, 0.2, Math.PI - 0.2); X.strokeStyle = "#23403d"; X.lineWidth = 3; X.stroke();
+  X.restore();
+}
+function scene(t, img) {
+  let i = 0; while (i < SEGS.length - 1 && t >= STARTS[i + 1]) i++;
+  const sg = SEGS[i], lt = t - STARTS[i], src = sg.s + lt * sg.v, dur = (sg.e - sg.s) / sg.v;
+  const ph = ["JOIN", "INTRO", "RACE", "LINEUP", "EVENTS", "EVENTS", "CALL", "GUESS", "ZOOM", "END", "CLOSE"][i];
+  const green = src >= MARKS.GREEN && src < MARKS.GREEN + 6;
+  const revealed = ph === "CALL" && src >= MARKS.CALL + 2.6;
+  const G = MARKS["EV:gamble"], gambleOpen = ph === "EVENTS" && src >= G && src < G + 14;
+  let g = X.createLinearGradient(0, 0, 0, 560); g.addColorStop(0, "#f3ebdf"); g.addColorStop(1, "#e9dfcf"); X.fillStyle = g; X.fillRect(0, 0, 1920, 560);
+  g = X.createLinearGradient(0, 520, 0, 1080); g.addColorStop(0, "#d8c19c"); g.addColorStop(1, "#c8ac80"); X.fillStyle = g; X.fillRect(0, 520, 1920, 560);
+  X.strokeStyle = "rgba(120,90,50,.18)"; X.lineWidth = 2;
+  for (let k = -12; k < 13; k++) { X.beginPath(); X.moveTo(960 + k * 40, 520); X.lineTo(960 + k * 190, 1080); X.stroke(); }
+  rr(0, 512, 1920, 12, 0, "#cdbb9f");
+  for (const wx of [70, 1700]) { rr(wx, 110, 160, 280, 8, "#fff"); rr(wx + 10, 120, 140, 260, 4, "#cfe6ef"); X.fillStyle = "#fff"; X.fillRect(wx + 77, 120, 6, 260); X.fillRect(wx + 10, 246, 140, 6); }
+  rr(540, 22, 840, 492, 14, "#2a2f2e"); X.drawImage(img, 560, 42, 800, 450);
+  person(440, 230, 0.9, "#2e8c80", "#f0c9a5", "#2b211c", { point: ph === "JOIN" || (ph === "ZOOM" && lt > 10) || ph === "CLOSE" });
+  pill("ผู้นำเสนอ", 440, 178, 16, "#1d4743", "#e9f6f2");
+  let hx = 1500, hy = 250, hs = 0.85;
+  if (ph === "END" || ph === "CLOSE") { const p = ph === "CLOSE" ? 1 : Math.min(1, lt / 4); hx = 1500 + (winner.x + 60 - 1500) * p; hy = 250 + (winner.y - 120 - 250) * p; hs = 0.85 + 0.25 * p; }
+  person(hx, hy, hs, "#f6b48c", "#e8b98f", "#3b2a20", { carry: ph === "END" });
+  pill("ผู้ช่วย", hx, hy - 58 * hs, 16, "#1d4743", "#e9f6f2");
+  for (const st of students) {
+    let dx = 0, dy = 0, tilt = 0, glow = 0, red = false;
+    if (ph !== "JOIN" || lt / dur > st.joinAt * 0.85) glow = 0.55;
+    if (ph === "INTRO" || ph === "GUESS") { dy = 5; glow = 1; }
+    if (ph === "EVENTS" && gambleOpen) { dy = 5; glow = 1; }
+    if (ph === "RACE") {
+      if (src < MARKS.GREEN) { dy = -4; glow = 0.9; }
+      else if (green) { dy = Math.sin(t * 38 + st.ph) * 5 * st.s; dx = Math.sin(t * 29 + st.ph) * 2; glow = 1; }
+      if (fouls.includes(st) && src > MARKS.GREEN - 1.2) red = true;
+    }
+    if (ph === "EVENTS" && gambleOpen && st.k % 2 === 0) { dx = st.side * -9 * Math.min(1, (src - G - 4) * 2); tilt = st.side * -0.12; }
+    if (ph === "END" && lt > 3 && st.k % 2 === 0 && st.row % 2 === 0) { dx = -8 * st.side; tilt = -0.1 * st.side; }
+    if (ph === "ZOOM") glow = 0.2;
+    if (ph === "CLOSE") glow = 0.1;
+    st._dx = dx; st._dy = dy;
+    X.save(); X.translate(st.x + dx, st.y + dy); X.scale(st.s, st.s); X.rotate(tilt);
+    rr(-38, 32, 76, 40, 8, "#5d6b6a");
+    X.beginPath(); X.ellipse(0, 46, 44, 30, 0, Math.PI, 0); X.fillStyle = red ? "#e0362a" : st.shirt; X.fill(); X.fillRect(-44, 45, 88, 26);
+    if (glow > 0) { const gg = X.createRadialGradient(0, 8, 2, 0, 8, 46); gg.addColorStop(0, `rgba(170,240,255,${0.55 * glow})`); gg.addColorStop(1, "rgba(170,240,255,0)"); X.fillStyle = gg; X.fillRect(-50, -40, 100, 100); }
+    X.beginPath(); X.arc(0, 0, 26, 0, 7); X.fillStyle = st.hair; X.fill();
+    if (st.long) rr(-24, 0, 48, 40, 14, st.hair);
+    X.restore();
+  }
+  if (revealed || ph === "END" || ph === "CLOSE") {
+    const st = winner, up = ph === "CALL" ? Math.min(1, (src - MARKS.CALL - 2.6) * 3) : 1;
+    X.save(); X.translate(st.x, st.y); X.scale(st.s, st.s);
+    X.fillStyle = "rgba(255,210,125,.35)"; X.beginPath(); X.arc(0, -20, 70, 0, 7); X.fill();
+    if (ph !== "CLOSE") { rr(20, 30 - 110 * up, 20, 110 * up, 10, st.shirt); X.beginPath(); X.arc(30, 26 - 110 * up, 14, 0, 7); X.fillStyle = "#f0c9a5"; X.fill(); }
+    X.restore();
+    if (ph === "CALL") for (let k = 0; k < 6; k++) { const a = t * 3 + k; X.font = "28px sans-serif"; X.textAlign = "center"; X.fillText("✨", st.x + 30 + Math.cos(a) * 60, st.y - 90 + Math.sin(a) * 40); }
+    pill("ผู้ได้พบหมอ", st.x + 30 * st.s, st.y - 130 * st.s, 16, "#ffd27d", "#1d4743");
+  }
+  const say = (st, txt, from, to, size = 22) => { const a = Math.min(1, (lt - from) * 4, (to - lt) * 4); if (a > 0) bubble(txt, st.x + st._dx, st.y - 34 * st.s + st._dy, size * Math.max(0.85, st.s), a); };
+  const o = (x) => (x - sg.s) / sg.v; // source time → time inside this segment
+  if (ph === "JOIN") { say(S(3, -1, 2), "เข้าแล้ว!", 2, 5); say(S(1, 1, 4), "ชื่อไรดี", 4, 7.5); }
+  if (ph === "INTRO") { say(S(2, -1, 1), "ได้แดง! 🔴", 1, 4); say(S(3, 1, 3), "ไม่รีบ 555", 2.5, 5.5); say(S(0, 1, 6), "ปานกลาง~", 4, 7); }
+  if (ph === "RACE") {
+    const gOut = o(MARKS.GREEN);
+    say(S(2, 1, 5), "อย่าเพิ่งกด…", 0.6, gOut - 0.6);
+    fouls.forEach((f, n) => say(f, "🚫 ลัดคิว!", gOut - 1 + n * 0.4, gOut + 3));
+    if (lt > gOut) for (let k = 0; k < 10; k++) { const st = students[(k * 7) % students.length]; X.font = `${18 * st.s}px sans-serif`; X.fillText("💥", st.x + Math.sin(t * 20 + k) * 30, st.y - 40 * st.s); }
+  }
+  if (ph === "LINEUP") { say(S(3, -1, 4), "กดตั้งเยอะ 😂", 4, 8); say(S(1, 1, 2), "ฉันอยู่ไหน?", 1, 4.5); say(S(4, 1, 1), "555+", 6, 9.5); }
+  if (ph === "EVENTS") {
+    say(S(3, 1, 0), "ย้ายดีไหม?", o(G + 4), o(G + 8)); say(S(3, 1, 1), "ย้ายเลย!", o(G + 6), o(G + 10)); say(S(2, -1, 3), "ไกลนะ…", o(G + 8), o(G + 12));
+    say(S(2, -1, 2), "จริงด้วย ต้องมีใบส่งตัว", o(MARKS["EV:docs"] + 2), o(MARKS["EV:docs"] + 6));
+    say(S(1, -1, 1), "😮 โห!", o(MARKS["EV:crash"] + 1), o(MARKS["EV:crash"] + 4));
+    say(S(4, -1, 2), "😱", o(MARKS["EV:cancel"] + 0.5), o(MARKS["EV:cancel"] + 3.5));
+  }
+  if (ph === "CALL") { const r = o(MARKS.CALL + 2.6); say(S(4, 1, 3), "ลุ้นนน 🥁", 0.4, r); say(S(3, -1, 5), "ด่วนมากยังไม่ได้!", r + 4, r + 9); }
+  if (ph === "GUESS") { say(S(2, -1, 4), "100 มั้ง?", 1, 4); say(S(3, 1, 2), "1,000?!", 3, 6.5); }
+  if (ph === "ZOOM") { say(S(3, 1, 4), "โห…", 9, 12); say(S(2, -1, 2), "ห้องเราจุดเดียวเอง", 13, 17); }
+  if (ph === "END") { say(S(2, -1, 5), "ช่วงนี้เป็นไงบ้าง?", 2, 7); say(S(3, 1, 5), "ขอบใจนะ 🍬", 4.5, 8.5); }
+  if (ph === "CLOSE") { say(S(3, -1, 3), "จริงแฮะ…", 6, 10); say(S(2, 1, 4), "หมอก็ต้องมีคนดูแล", 8.5, 12.5); }
+  if (["EVENTS", "CALL", "LINEUP", "END"].includes(ph)) {
+    const em = ["😱", "😂", "🙏", "💛"];
+    for (let k = 0; k < 14; k++) {
+      const st = students[(k * 11 + 3) % students.length], period = 2.2, off = (k * 0.37) % period, q = ((lt + off) % period) / period;
+      X.globalAlpha = Math.min(1, (1 - q) * 2); X.font = `${30 * st.s}px sans-serif`; X.textAlign = "center";
+      X.fillText(em[k % 4], st.x + Math.sin(q * 6 + k) * 10, st.y - 40 - q * 160); X.globalAlpha = 1;
+    }
+  }
+  if (ph === "END" && lt > 1) ROWS.forEach((r, ri) => { for (const side of [-1, 1]) { const p = Math.min(1, (lt - 1 - ri * 0.3) / 4); if (p <= 0) continue;
+    const x0 = 960 + side * 95 * r.s, x1 = 960 + side * (95 * r.s + r.n * 64 * r.s * 1.45);
+    X.font = `${30 * r.s}px sans-serif`; X.textAlign = "center"; X.fillText("🍬", x0 + (x1 - x0) * p, r.y + 40 * r.s); } });
+  if (ph === "ZOOM") {
+    const a = 0.5 * Math.min(1, lt / 1.5, (dur - lt) / 1.5);
+    X.fillStyle = `rgba(10,20,30,${a})`; X.fillRect(0, 0, 1920, 22); X.fillRect(0, 514, 1920, 566); X.fillRect(0, 22, 540, 492); X.fillRect(1380, 22, 540, 492);
+  }
+  const cp = CAPS[i];
+  rr(30, 930, 1860, 128, 20, "rgba(29,71,67,.95)");
+  rr(56, 950, 40, 40, 11, "#ffd27d"); X.fillStyle = "#1d4743"; X.font = "800 24px Prompt"; X.textAlign = "center"; X.textBaseline = "middle"; X.fillText(String(sg.n), 76, 971);
+  X.textAlign = "left"; X.fillStyle = "#bfe7de"; X.font = "600 22px Prompt"; X.fillText(cp[0], 112, 971);
+  X.fillStyle = "#fff"; X.font = "800 36px Prompt"; X.fillText(cp[1], 56, 1012);
+  X.fillStyle = "#bfe7de"; X.font = "600 22px Prompt"; X.fillText(cp[2], 56, 1044);
+  X.fillStyle = "rgba(35,64,61,.55)"; X.font = "600 18px Prompt"; X.textAlign = "right"; X.fillText("ภาพประกอบบรรยากาศ (ไม่ใช่ภาพจริง) · คิวเดียว 3 นาที", 1890, 16);
+}
+window.setup = (segs, marks, caps) => { SEGS = segs; MARKS = marks; CAPS = caps; let t = 0; for (const s of segs) { STARTS.push(t); t += (s.e - s.s) / s.v; } return t; };
+window.frame = (t, src) => new Promise((res) => { const im = new Image(); im.onload = () => { scene(t, im); res(C.toDataURL("image/jpeg", 0.9)); }; im.src = src; });
+</script></body></html>

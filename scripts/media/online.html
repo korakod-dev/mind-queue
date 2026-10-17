@@ -1,0 +1,156 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// Illustrated online class: the presenter shares the big screen; everyone plays from home on their phone.
+// Generic video-call look (no real app's branding). Driven frame by frame by render-online.mjs.
+const C = document.getElementById("c"), X = C.getContext("2d");
+let SEGS, MARKS, STARTS = [], CAPS;
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const NAMES = ["อาจารย์ (ผู้นำเสนอ)", "มิ้น", "บอส", "ฟ้า", "ต้น", "แพร", "กัน", "ปอ", "เฟิร์น", "นัท", "บีม", "ใบเตย", "โอม"];
+const SKIN = ["#f0c9a5", "#e8b98f", "#d9a47c", "#f3d2b4", "#c98f68"];
+const HAIR = ["#2b211c", "#3b2a20", "#1d1a19", "#5a3b26", "#6b4a33"];
+const SHIRT = ["#7fd6c9", "#f6b48c", "#f7d488", "#e98aa2", "#9cc5f0", "#b9a3e3", "#a8d98a", "#f2a7a0"];
+const ROOMS = [ // wall, accent, prop
+  ["#e9e1d3", "#cfe6ef", "window"], ["#dfe9e4", "#8fb8a8", "plant"], ["#efe2d6", "#e3c9a8", "shelf"], ["#2c3440", "#ffd27d", "night"],
+  ["#f3e6e9", "#e98aa2", "poster"], ["#e4e8f1", "#9cc5f0", "lamp"], ["#efe9d8", "#d8c19c", "cat"], ["#e3efe0", "#a8d98a", "plant"],
+];
+// tiles: right column 2×4, bottom strip 5
+const TILES = [];
+for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) TILES.push({ x: 1296 + c * 302, y: 72 + r * 186, w: 292, h: 176 });
+for (let c = 0; c < 5; c++) TILES.push({ x: 24 + c * 251, y: 790, w: 241, h: 128 });
+const people = TILES.map((t, i) => ({ ...t, i, name: NAMES[i], skin: SKIN[(rnd() * SKIN.length) | 0], hair: HAIR[(rnd() * HAIR.length) | 0],
+  shirt: SHIRT[(rnd() * SHIRT.length) | 0], room: ROOMS[(rnd() * ROOMS.length) | 0], ph: rnd() * 6.28, long: rnd() < 0.4, glasses: rnd() < 0.25, presenter: i === 0 }));
+const P = (i) => people[i];
+const winner = P(5), fouls = [P(3), P(10)];
+function rr(x, y, w, h, r, fill) { X.beginPath(); X.roundRect(x, y, w, h, r); X.fillStyle = fill; X.fill(); }
+function bubble(txt, x, y, size, alpha = 1) {
+  X.save(); X.globalAlpha = alpha; X.font = `700 ${size}px Prompt`;
+  const w = X.measureText(txt).width + size * 1.1, h = size * 1.7;
+  X.shadowColor = "rgba(0,0,0,.25)"; X.shadowBlur = 8; rr(x - w / 2, y - h, w, h, h / 2, "#fff"); X.shadowBlur = 0;
+  X.fillStyle = "#23403d"; X.textAlign = "center"; X.textBaseline = "middle"; X.fillText(txt, x, y - h / 2); X.restore();
+}
+function room(p) {
+  const [wall, acc, prop] = p.room;
+  X.save(); X.beginPath(); X.roundRect(p.x, p.y, p.w, p.h, 12); X.clip();
+  X.fillStyle = wall; X.fillRect(p.x, p.y, p.w, p.h);
+  const u = p.h / 176;
+  if (prop === "window" || prop === "night") { rr(p.x + p.w * 0.62, p.y + 14 * u, 70 * u, 60 * u, 4, prop === "night" ? "#1b2230" : acc); if (prop === "night") { X.fillStyle = "#ffd27d"; X.beginPath(); X.arc(p.x + p.w * 0.62 + 50 * u, p.y + 30 * u, 7 * u, 0, 7); X.fill(); } }
+  if (prop === "plant") { rr(p.x + p.w * 0.78, p.y + 70 * u, 26 * u, 30 * u, 4, "#b07a52"); X.fillStyle = acc; X.beginPath(); X.ellipse(p.x + p.w * 0.78 + 13 * u, p.y + 58 * u, 22 * u, 20 * u, 0, 0, 7); X.fill(); }
+  if (prop === "shelf") { rr(p.x + 10 * u, p.y + 30 * u, 80 * u, 6 * u, 2, "#8a6a4a"); for (let k = 0; k < 4; k++) rr(p.x + (14 + k * 16) * u, p.y + (12 + (k % 2) * 4) * u, 12 * u, (18 - (k % 2) * 4) * u, 2, SHIRT[k]); }
+  if (prop === "poster") rr(p.x + 12 * u, p.y + 14 * u, 50 * u, 66 * u, 4, acc);
+  if (prop === "lamp") { X.fillStyle = "rgba(255,230,160,.45)"; X.beginPath(); X.arc(p.x + p.w * 0.85, p.y + 30 * u, 40 * u, 0, 7); X.fill(); rr(p.x + p.w * 0.85 - 12 * u, p.y + 18 * u, 24 * u, 16 * u, 4, acc); }
+  if (prop === "cat") { X.font = `${34 * u}px sans-serif`; X.textAlign = "center"; X.fillText("🐈", p.x + p.w * 0.84, p.y + p.h - 18 * u); }
+  X.restore();
+}
+function person(p, st) {
+  const u = p.h / 176, cx = p.x + p.w * 0.42 + st.dx * u, base = p.y + p.h;
+  X.save(); X.beginPath(); X.roundRect(p.x, p.y, p.w, p.h, 12); X.clip();
+  const headY = base - 92 * u + st.dy * u;
+  X.fillStyle = p.shirt; X.beginPath(); X.ellipse(cx, base + 10 * u, 62 * u, 52 * u, 0, Math.PI, 0); X.fill(); X.fillRect(cx - 62 * u, base + 8 * u, 124 * u, 20 * u);
+  X.fillStyle = p.skin; X.fillRect(cx - 9 * u, headY + 20 * u, 18 * u, 22 * u);
+  if (p.long) { rr(cx - 33 * u, headY - 8 * u, 15 * u, 56 * u, 7 * u, p.hair); rr(cx + 18 * u, headY - 8 * u, 15 * u, 56 * u, 7 * u, p.hair); }
+  X.beginPath(); X.arc(cx, headY, 28 * u, 0, 7); X.fillStyle = p.skin; X.fill();
+  X.beginPath(); X.arc(cx, headY - 6 * u, 29 * u, Math.PI * 1.02, -0.02); X.fillStyle = p.hair; X.fill();
+  const look = st.down ? 6 : 0;
+  X.fillStyle = "#23403d"; X.beginPath(); X.arc(cx - 10 * u, headY + (3 + look) * u, 3.2 * u, 0, 7); X.arc(cx + 10 * u, headY + (3 + look) * u, 3.2 * u, 0, 7); X.fill();
+  if (p.glasses) { X.strokeStyle = "#23403d"; X.lineWidth = 2 * u; X.beginPath(); X.arc(cx - 10 * u, headY + 3 * u, 7 * u, 0, 7); X.moveTo(cx + 17 * u, headY + 3 * u); X.arc(cx + 10 * u, headY + 3 * u, 7 * u, 0, 7); X.stroke(); }
+  X.strokeStyle = "#23403d"; X.lineWidth = 2.5 * u; X.beginPath();
+  if (st.mouth === "laugh") { X.fillStyle = "#7a2e2e"; X.ellipse(cx, headY + 14 * u, 8 * u, 6 * u, 0, 0, Math.PI); X.fill(); }
+  else if (st.mouth === "o") { X.arc(cx, headY + 15 * u, 4 * u, 0, 7); X.stroke(); }
+  else { X.arc(cx, headY + 10 * u, 7 * u, 0.25, Math.PI - 0.25); X.stroke(); }
+  if (st.phone) { // phone held up, screen lights the face
+    const px = cx + 30 * u, py = base - 40 * u + (st.tap ? Math.sin(st.t * 40 + p.ph) * 3 * u : 0);
+    X.fillStyle = `rgba(170,240,255,${0.25 * st.glow})`; X.beginPath(); X.arc(cx, headY + 10 * u, 34 * u, 0, 7); X.fill();
+    rr(px - 2 * u, py, 28 * u, 46 * u, 5 * u, "#1f2a29"); rr(px + 1 * u, py + 3 * u, 22 * u, 40 * u, 3 * u, st.screen || "#bfe7de");
+    X.fillStyle = p.skin; X.beginPath(); X.ellipse(px + 10 * u, py + 40 * u, 13 * u, 9 * u, 0, 0, 7); X.fill();
+  }
+  if (st.raise) { rr(cx + 40 * u, base - 140 * u, 16 * u, 110 * u, 8 * u, p.shirt); X.fillStyle = p.skin; X.beginPath(); X.arc(cx + 48 * u, base - 142 * u, 12 * u, 0, 7); X.fill(); }
+  X.restore();
+}
+function tileChrome(p, st) {
+  const u = p.h / 176;
+  if (st.speak) { X.strokeStyle = "#35b34f"; X.lineWidth = 4; X.beginPath(); X.roundRect(p.x + 2, p.y + 2, p.w - 4, p.h - 4, 12); X.stroke(); }
+  if (st.win) { X.strokeStyle = "#ffd27d"; X.lineWidth = 6; X.beginPath(); X.roundRect(p.x + 3, p.y + 3, p.w - 6, p.h - 6, 12); X.stroke(); }
+  X.font = `700 ${Math.max(13, 14 * u)}px Prompt`; const label = (st.speak ? "🎙 " : "🔇 ") + p.name;
+  const w = X.measureText(label).width + 14;
+  rr(p.x + 8, p.y + p.h - 30 * Math.max(0.85, u), w, 22 * Math.max(0.85, u), 6, "rgba(0,0,0,.55)");
+  X.fillStyle = "#fff"; X.textAlign = "left"; X.textBaseline = "middle"; X.fillText(label, p.x + 15, p.y + p.h - 19 * Math.max(0.85, u));
+  if (p.presenter) { rr(p.x + p.w - 96, p.y + 8, 88, 22, 6, "#2e8c80"); X.font = "700 13px Prompt"; X.fillStyle = "#fff"; X.textAlign = "center"; X.fillText("กำลังแชร์จอ", p.x + p.w - 52, p.y + 19); }
+}
+function scene(t, img) {
+  let i = 0; while (i < SEGS.length - 1 && t >= STARTS[i + 1]) i++;
+  const sg = SEGS[i], lt = t - STARTS[i], src = sg.s + lt * sg.v, dur = (sg.e - sg.s) / sg.v;
+  const ph = ["JOIN", "INTRO", "RACE", "LINEUP", "EVENTS", "EVENTS", "CALL", "GUESS", "ZOOM", "END", "CLOSE"][i];
+  const green = src >= MARKS.GREEN && src < MARKS.GREEN + 6;
+  const revealed = ph === "CALL" && src >= MARKS.CALL + 2.6;
+  const G = MARKS["EV:gamble"], gambleOpen = ph === "EVENTS" && src >= G && src < G + 14;
+  const o = (x) => (x - sg.s) / sg.v;
+  // app frame
+  X.fillStyle = "#151c1b"; X.fillRect(0, 0, 1920, 1080);
+  rr(0, 0, 1920, 56, 0, "#1f2a29");
+  X.fillStyle = "#e9f6f2"; X.font = "700 22px Prompt"; X.textAlign = "left"; X.textBaseline = "middle"; X.fillText("ห้องเรียนออนไลน์ · คิวหน้าห้องจิตแพทย์", 24, 28);
+  X.fillStyle = "#e0362a"; X.beginPath(); X.arc(1560, 28, 7, 0, 7); X.fill();
+  X.fillStyle = "#bfe7de"; X.font = "600 18px Prompt"; X.fillText("ผู้เข้าร่วม 53 คน · ทุกคนอยู่บ้าน", 1576, 28);
+  // shared screen
+  rr(20, 68, 1256, 710, 10, "#000"); X.drawImage(img, 24, 72, 1248, 702);
+  rr(34, 82, 268, 30, 8, "rgba(46,140,128,.92)"); X.fillStyle = "#fff"; X.font = "700 16px Prompt"; X.textAlign = "left"; X.fillText("🖥  อาจารย์กำลังแชร์หน้าจอ", 46, 97);
+  if (ph === "ZOOM") { X.fillStyle = `rgba(0,0,0,${0.0})`; }
+  // people
+  for (const p of people) {
+    room(p);
+    const st = { dx: 0, dy: 0, mouth: "smile", phone: !p.presenter, glow: 0.6, tap: false, down: false, t, speak: false, raise: false, win: false, screen: null };
+    if (ph === "JOIN") { st.phone = !p.presenter && lt > (p.i % 6) * 1.1; st.down = st.phone; }
+    if (ph === "INTRO" || ph === "GUESS") { st.down = true; st.glow = 1; }
+    if (ph === "RACE") {
+      if (src < MARKS.GREEN) { st.screen = "#e0362a"; st.down = true; st.mouth = "o"; }
+      else if (green) { st.screen = "#35b34f"; st.tap = true; st.glow = 1; st.dy = Math.sin(t * 30 + p.ph) * 2; }
+      if (fouls.includes(p) && src > MARKS.GREEN - 1.2) st.mouth = "o";
+    }
+    if (ph === "LINEUP" && (p.i % 3 === 1) && lt > 4) st.mouth = "laugh";
+    if (ph === "EVENTS" && gambleOpen) { st.down = true; st.glow = 1; st.screen = "#f2a230"; }
+    if (ph === "CALL" && !revealed) st.mouth = "o";
+    if (revealed && p === winner) { st.raise = true; st.win = true; st.mouth = "laugh"; }
+    if ((ph === "END" || ph === "CLOSE") && p === winner) st.win = true;
+    if (ph === "ZOOM" || ph === "CLOSE") { st.phone = false; st.mouth = ph === "ZOOM" && lt > 12 ? "o" : "smile"; }
+    if (p.presenter) { st.speak = ph === "JOIN" || ph === "CLOSE" || (ph === "END" && lt < 6); }
+    p._st = st;
+    person(p, st);
+    if (ph === "ZOOM") { X.fillStyle = "rgba(0,0,0,.25)"; X.beginPath(); X.roundRect(p.x, p.y, p.w, p.h, 12); X.fill(); }
+  }
+  // who is talking / typing (bubbles in tiles)
+  const say = (p, txt, from, to, speak = true) => { const a = Math.min(1, (lt - from) * 4, (to - lt) * 4); if (a > 0) { if (speak) p._st.speak = true; const u = Math.max(0.8, p.h / 176); bubble(txt, p.x + p.w / 2, p.y + 40 * u, 18 * u, a); } };
+  if (ph === "JOIN") { say(P(0), "สแกน QR บนจอ หรือกดลิงก์ในแชทนะ", 0.5, 6); say(P(2), "เข้าแล้วครับ!", 4, 7.5); }
+  if (ph === "INTRO") { say(P(1), "ได้แดง! 🔴", 1, 4); say(P(4), "ไม่รีบ 555", 2.5, 5.5); say(P(9), "ปานกลาง~", 4, 7); }
+  if (ph === "RACE") { const gOut = o(MARKS.GREEN); say(P(6), "อย่าเพิ่งกด…", 0.6, gOut - 0.6); fouls.forEach((f, n) => say(f, "🚫 ลัดคิว!", gOut - 1 + n * 0.4, gOut + 3)); }
+  if (ph === "LINEUP") { say(P(7), "กดตั้งเยอะ 😂", 4, 8); say(P(11), "อยู่ไหนเนี่ย", 1, 4.5); }
+  if (ph === "EVENTS") {
+    say(P(2), "ย้ายดีไหม?", o(G + 4), o(G + 8)); say(P(8), "ไกลบ้านมากเลย", o(G + 6), o(G + 10)); say(P(12), "ย้าย!", o(G + 8), o(G + 12));
+    say(P(4), "จริง ต้องมีใบส่งตัว", o(MARKS["EV:docs"] + 2), o(MARKS["EV:docs"] + 6)); say(P(9), "😮 โห", o(MARKS["EV:crash"] + 1), o(MARKS["EV:crash"] + 4));
+  }
+  if (ph === "CALL") { const r = o(MARKS.CALL + 2.6); say(P(3), "ลุ้นนน 🥁", 0.4, r); say(winner, "ได้แล้ว!! รหัสอยู่ในมือถือ", r + 0.8, r + 5); say(P(6), "ด่วนมากยังไม่ได้เลย", r + 5, r + 10); }
+  if (ph === "GUESS") { say(P(10), "100 มั้ง?", 1, 4); say(P(1), "1,000?!", 3, 6.5); }
+  if (ph === "ZOOM") say(P(7), "โห… จุดเดียวเอง", 13, 17);
+  if (ph === "END") { say(P(0), "ส่งขนมไม่ได้ ก็ถามเพื่อนในแชทกันนะ", 0.5, 6); say(P(2), "ช่วงนี้เป็นไงบ้าง? 💛", 5, 10); say(P(11), "ก็โอเค ขอบใจนะ", 8, 12.5); }
+  if (ph === "CLOSE") { say(P(0), "ถึงเวลาแล้วหรือยัง…", 1, 6); say(P(8), "จริงแฮะ…", 8, 12, false); }
+  for (const p of people) tileChrome(p, p._st); // name, mic, speaking / winner frame (after bubbles set "speak")
+  // meeting-style floating reactions over the shared screen
+  if (["EVENTS", "CALL", "LINEUP", "END"].includes(ph)) {
+    const em = ["😱", "😂", "🙏", "💛", "👏"];
+    for (let k = 0; k < 12; k++) { const period = 2.4, off = (k * 0.41) % period, q = ((lt + off) % period) / period;
+      X.globalAlpha = Math.min(1, (1 - q) * 2); X.font = "34px sans-serif"; X.textAlign = "center";
+      X.fillText(em[k % 5], 80 + ((k * 97) % 1100), 760 - q * 220); X.globalAlpha = 1; }
+  }
+  // caption
+  const cp = CAPS[i];
+  rr(20, 930, 1880, 128, 18, "rgba(29,71,67,.97)");
+  rr(46, 950, 40, 40, 11, "#ffd27d"); X.fillStyle = "#1d4743"; X.font = "800 24px Prompt"; X.textAlign = "center"; X.textBaseline = "middle"; X.fillText(String(sg.n), 66, 971);
+  X.textAlign = "left"; X.fillStyle = "#bfe7de"; X.font = "600 22px Prompt"; X.fillText(cp[0], 102, 971);
+  X.fillStyle = "#fff"; X.font = "800 34px Prompt"; X.fillText(cp[1], 46, 1012);
+  X.fillStyle = "#bfe7de"; X.font = "600 22px Prompt"; X.fillText(cp[2], 46, 1044);
+  X.fillStyle = "rgba(191,231,222,.75)"; X.font = "600 16px Prompt"; X.textAlign = "right"; X.fillText("ภาพจำลองการเล่นออนไลน์ (ไม่ใช่ภาพจริง)", 1880, 966);
+}
+window.setup = (segs, marks, caps) => { SEGS = segs; MARKS = marks; CAPS = caps; let t = 0; for (const s of segs) { STARTS.push(t); t += (s.e - s.s) / s.v; } return t; };
+window.frame = (t, src) => new Promise((res) => { const im = new Image(); im.onload = () => { scene(t, im); res(C.toDataURL("image/jpeg", 0.9)); }; im.src = src; });
+</script></body></html>

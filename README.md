@@ -47,6 +47,7 @@ Screenshots come from a local game with 45 bot players. The big screen is shown 
 
 - [`media/how-to-play.mp4`](media/how-to-play.mp4): how to play from start to finish: a recorded live game (big screen + phone side by side) with captions; long phases are sped up; ends with the closing message (2:29).
 - [`media/classroom-atmosphere.mp4`](media/classroom-atmosphere.mp4): animated preview of the classroom for the helper and team, with the recorded big screen on the projector and student reactions per phase (2:29, illustration, not real footage).
+- [`media/online-atmosphere.mp4`](media/online-atmosphere.mp4): the same game played online from home: the presenter shares the big screen in a (generic) video call and every participant plays on their own phone; captions cover the online specifics (link in chat, share computer audio, screen-share delay is fine because the green light shows on each phone, prize code by private chat, no snack passing) (2:29, illustration, not real footage).
 
 Both videos use procedurally generated background music, so there are no copyright issues.
 
@@ -83,8 +84,9 @@ public/host.html    big screen (/host)     public/js/host.js, sfx.js (Web Audio 
 public/js/net.js    reconnecting WebSocket + server-clock sync (shared)
 public/js/strings.js  all Thai UI strings
 scripts/loadtest.mjs  80-player end-to-end load test
+scripts/media/       rebuild README screenshots + the three videos from a live local game (see its README)
 docs/screenshots/   README screenshots
-media/              how-to-play + classroom-atmosphere videos
+media/              how-to-play, classroom-atmosphere and online-atmosphere videos
 helper-guide.html   snack-helper guide (Thai)
 RUNSHEET.th.md      presenter run sheet (Thai)
 ```
