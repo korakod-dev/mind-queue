@@ -85,6 +85,8 @@ interface GameState {
   queue: string[] | null;
   tapSeq: number;
   eventOrder: EventKind[];
+  /** Seconds after EVENTS starts at which each event in eventOrder fires. */
+  eventTimes: number[];
   events: EventRec[];
   winnerId: string | null;
   totalTaps: number;
@@ -111,6 +113,18 @@ function phaseIndex(p: Phase): number {
   return PHASES.indexOf(p);
 }
 
+/** When each event fires (s after EVENTS starts) and how long EVENTS lasts, for one event order. */
+function eventTimeline(order: EventKind[]): { times: number[]; totalSec: number } {
+  const E = config.events;
+  let t = E.titleSec;
+  const times: number[] = [];
+  for (const kind of order) {
+    times.push(t);
+    t += kind === "gamble" ? E.gambleDecideSec + E.gambleResultSec : E.cardSec[kind];
+  }
+  return { times, totalSec: t };
+}
+
 function freshState(now: number): GameState {
   return {
     v: 2,
@@ -124,6 +138,7 @@ function freshState(now: number): GameState {
     queue: null,
     tapSeq: 0,
     eventOrder: [],
+    eventTimes: [],
     events: [],
     winnerId: null,
     totalTaps: 0,
@@ -221,6 +236,7 @@ export class GameRoom extends DurableObject<Env> {
       const saved = await ctx.storage.get<GameState>(STATE_KEY);
       this.state = saved && saved.v === 2 ? saved : freshState(Date.now());
       this.state.pausedAt ??= null; // states saved before pause existed
+      this.state.eventTimes ??= eventTimeline(this.state.eventOrder ?? []).times;
     });
   }
 
@@ -541,8 +557,10 @@ export class GameRoom extends DurableObject<Env> {
       case "EVENTS": {
         const others = shuffle<EventKind>(["docs", "crash", "cancel"]);
         s.eventOrder = [others[0], "gamble", others[1], others[2]];
+        const tl = eventTimeline(s.eventOrder);
+        s.eventTimes = tl.times;
         s.events = [];
-        s.phaseEndAt = at + T.eventsSec * 1000;
+        s.phaseEndAt = at + tl.totalSec * 1000;
         break;
       }
       case "CALL":
@@ -586,7 +604,7 @@ export class GameRoom extends DurableObject<Env> {
   private fireDueEvents(t: number) {
     const s = this.state;
     if (s.phaseStartAt === null || !s.queue) return;
-    const times = config.events.times;
+    const times = s.eventTimes;
     for (let guard = 0; guard < times.length * 2; guard++) {
       const i = s.events.length;
       const nextAt = i < times.length ? s.phaseStartAt + times[i] * 1000 : Infinity;
@@ -688,7 +706,7 @@ export class GameRoom extends DurableObject<Env> {
     if (s.phaseEndAt === null || s.pausedAt !== null) return null;
     const cands = [s.phaseEndAt];
     if (s.phase === "EVENTS" && s.phaseStartAt !== null) {
-      const times = config.events.times;
+      const times = s.eventTimes;
       if (s.events.length < times.length) cands.push(s.phaseStartAt + times[s.events.length] * 1000);
       const g = this.pendingGamble();
       if (g) cands.push(g.decideUntil!);
