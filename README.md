@@ -20,14 +20,16 @@ The presenter presses start once; every phase after that runs on a timer. The bi
 | ![Lobby](docs/screenshots/host-lobby.jpg) | ![Intro](docs/screenshots/host-intro.jpg) |
 | **Race: green light + top tappers + false starts** | **Lineup + auto twist cards** |
 | ![Race](docs/screenshots/host-race.jpg) | ![Lineup](docs/screenshots/host-lineup.jpg) |
-| **Event: far-away hospital gamble** | **Event: queue system crash** |
-| ![Gamble](docs/screenshots/host-gamble.jpg) | ![Crash](docs/screenshots/host-event.jpg) |
+| **Event: far-away hospital gamble** | **Event card with its "in real life" line** |
+| ![Gamble](docs/screenshots/host-gamble.jpg) | ![Event](docs/screenshots/host-event.jpg) |
 | **Call: the winner + claim code, line coloured by urgency** | **Guess (live answers)** |
 | ![Call](docs/screenshots/host-call.jpg) | ![Guess](docs/screenshots/host-guess.jpg) |
 | **Zoom: answer reveal** | **Zoom: our room among ~1,000+ rooms** |
 | ![Zoom guess](docs/screenshots/host-zoom-guess.jpg) | ![Zoom](docs/screenshots/host-zoom.jpg) |
-| **Zoom: statistics** | **End** |
+| **Zoom: statistics** | **End: warm close (first 15 s)** |
 | ![Zoom text](docs/screenshots/host-zoom-text.jpg) | ![End](docs/screenshots/host-end.jpg) |
+| **End: closing message on psychiatrist retention** | |
+| ![Closing message](docs/screenshots/host-end-closing.jpg) | |
 
 ### Phones
 
@@ -36,15 +38,15 @@ The presenter presses start once; every phase after that runs on a timer. The bi
 | ![Join](docs/screenshots/phone-join.jpg) | ![Card](docs/screenshots/phone-card.jpg) | ![Race](docs/screenshots/phone-tap.jpg) | ![Look up](docs/screenshots/phone-queue.jpg) |
 | **Gamble (input moment)** | **Not called + summary line** | **Winner** | **Guess** |
 | ![Gamble](docs/screenshots/phone-gamble.jpg) | ![Not called](docs/screenshots/phone-call.jpg) | ![Winner](docs/screenshots/phone-win.jpg) | ![Guess](docs/screenshots/phone-guess.jpg) |
-| **Zoom + summary line** | **End** | | |
-| ![Zoom](docs/screenshots/phone-zoom.jpg) | ![End](docs/screenshots/phone-end.jpg) | | |
+| **Zoom + summary line** | **End** | **End + closing question** | |
+| ![Zoom](docs/screenshots/phone-zoom.jpg) | ![End](docs/screenshots/phone-end.jpg) | ![End closing](docs/screenshots/phone-end-closing.jpg) | |
 
 Screenshots come from a local game with 45 bot players. The big screen is shown at 1600×900; on a 1080p projector everything scales up.
 
 ### Videos
 
-- [`media/how-to-play.mp4`](media/how-to-play.mp4): how to play from start to finish: a recorded live game (big screen + phone side by side) with captions; long phases are sped up (2:01).
-- [`media/classroom-atmosphere.mp4`](media/classroom-atmosphere.mp4): animated preview of the classroom for the helper and team, with the recorded big screen on the projector and student reactions per phase (2:01, illustration, not real footage).
+- [`media/how-to-play.mp4`](media/how-to-play.mp4): how to play from start to finish: a recorded live game (big screen + phone side by side) with captions; long phases are sped up; ends with the closing message (2:29).
+- [`media/classroom-atmosphere.mp4`](media/classroom-atmosphere.mp4): animated preview of the classroom for the helper and team, with the recorded big screen on the projector and student reactions per phase (2:29, illustration, not real footage).
 
 Both videos use procedurally generated background music, so there are no copyright issues.
 
