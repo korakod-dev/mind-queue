@@ -1071,6 +1071,12 @@ body {
   font-weight: 700;
 }
 
+.ctl button.armed {
+  background: #c2412d;
+  color: #fff;
+  font-weight: 700;
+}
+
 .ctl-show {
   position: fixed;
   right: 10px;

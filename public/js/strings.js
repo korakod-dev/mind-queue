@@ -133,6 +133,7 @@ window.STR = {
   ctlStart: "เริ่มเกม ▶",
   ctlSkip: "ข้าม ⏭",
   ctlReset: "รีเซ็ต",
+  ctlResetConfirm: "กดอีกครั้งเพื่อรีเซ็ต",
   ctlHide: "ซ่อน",
   ctlFullscreen: "เต็มจอ",
   ctlPause: "⏸ หยุด",
@@ -140,7 +141,6 @@ window.STR = {
   ctlSound: "🔊 เสียง",
   ctlMuted: "🔇 ปิดเสียง",
   ctlOnline: "ออนไลน์ {n}",
-  resetConfirm: "รีเซ็ตเกมทั้งหมด?",
   hostNoKey: "ต้องเปิดด้วย /host?key=… ที่ถูกต้อง",
 };
 

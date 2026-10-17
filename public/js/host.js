@@ -8,7 +8,7 @@
  *   messages (joined / online / taps / top tappers / false starts / reactions / guesses).
  * - Timed effects (green light, call reveal, zoom timeline) are driven by the synced server
  *   clock, so a refresh lands on the same moment.
- * - Keyboard: Space or → = start / skip phase, P = pause / resume, M = sound on/off, R = reset (confirm),
+ * - Keyboard: Space or → = start / skip phase, P = pause / resume, M = sound on/off, R = reset (press twice),
  *   H = hide bar, F = fullscreen. Any key or click also unlocks audio.
  */
 (function () {
@@ -732,11 +732,32 @@
     SFX.unlock();
     net.send({ type: "host:pause" });
   }
+  // Reset asks for a second press within 3 s instead of window.confirm(): some browsers (embedded
+  // or in-app ones, or after "prevent additional dialogs") block or auto-dismiss the native popup,
+  // which made reset silently do nothing.
+  let resetArmedUntil = 0;
+  let resetTimer = null;
+  function disarmReset() {
+    resetArmedUntil = 0;
+    clearTimeout(resetTimer);
+    const btn = $("ctl-reset");
+    btn.classList.remove("armed");
+    btn.textContent = STR.ctlReset;
+  }
   function reset() {
-    if (confirm(STR.resetConfirm)) {
+    if (Date.now() < resetArmedUntil) {
+      disarmReset();
       zoom = null;
       net.send({ type: "host:reset" });
+      return;
     }
+    resetArmedUntil = Date.now() + 3000;
+    const btn = $("ctl-reset");
+    btn.classList.add("armed");
+    btn.textContent = STR.ctlResetConfirm;
+    if ($("ctl").hidden) toggleBar(false); // show the bar so the R key's confirmation is visible
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(disarmReset, 3000);
   }
   function toggleSound() {
     SFX.unlock();

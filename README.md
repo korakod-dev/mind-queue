@@ -95,7 +95,7 @@ RUNSHEET.th.md      presenter run sheet (Thai)
 | `/host?key=HOST_KEY` | presenter | key is moved to `sessionStorage` and removed from the address bar on load |
 | `/ws` | both | WebSocket; becomes host only if `hello.hostKey` matches the `HOST_KEY` secret |
 
-Host keys: `Space` / `→` / `PageDown` = start (in the lobby) or skip the current phase · `P` = pause / resume · `M` = sound on/off · `R` = reset (confirm) · `H` = hide control bar · `F` = fullscreen. Browsers only play audio after a gesture, so any key or click on the host page unlocks sound.
+Host keys: `Space` / `→` / `PageDown` = start (in the lobby) or skip the current phase · `P` = pause / resume · `M` = sound on/off · `R` = reset (press twice within 3 s; also the Reset button) · `H` = hide control bar · `F` = fullscreen. Browsers only play audio after a gesture, so any key or click on the host page unlocks sound.
 
 ## Setup
 
