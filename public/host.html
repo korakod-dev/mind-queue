@@ -16,6 +16,7 @@
     <div class="offline-dot" id="offline" data-str="reconnecting" hidden></div>
     <div class="phase-bar" id="phase-bar"><div id="phase-fill"></div></div>
     <div class="reacts-layer" id="reacts-layer" aria-hidden="true"></div>
+    <div class="shouts-layer" id="shouts-layer" aria-live="off"></div>
     <div class="paused-badge" id="paused" data-str="paused" hidden></div>
 
     <!-- boot / errors -->
@@ -34,6 +35,7 @@
         <h1 class="h-title" data-str="joinTitle"></h1>
         <p class="h-sub" data-str="lobbyHint"></p>
         <div class="joined num" id="joined"></div>
+        <button class="mode-toggle" id="online-toggle" type="button"></button>
         <div class="emoji-wall" id="emoji-wall"></div>
       </div>
     </section>
@@ -100,7 +102,7 @@
     <section class="stage" id="h-end" hidden>
       <div class="end-a" id="end-a">
         <div class="end-msg" data-str="endBig"></div>
-        <p class="h-line soft" data-str="endAsk"></p>
+        <p class="h-line soft" id="end-ask" data-str="endAsk"></p>
       </div>
       <div class="end-b" id="end-b" hidden>
         <p class="end-kicker" data-str="endSysKicker"></p>
@@ -115,7 +117,7 @@
       <div class="footer" data-str="hotline"></div>
     </section>
 
-    <!-- presenter controls: Space/→ start or skip · P pause · M sound · R reset · H hide · F fullscreen -->
+    <!-- presenter controls: Space/→ start or skip · P pause · O online mode (lobby) · M sound · R reset · H hide · F fullscreen -->
     <div class="ctl" id="ctl">
       <span class="info num" id="ctl-info"></span>
       <button class="primary" id="ctl-next"></button>

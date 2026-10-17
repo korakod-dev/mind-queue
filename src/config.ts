@@ -73,6 +73,18 @@ export const config = {
   /** Reaction buttons on phones; they float up on the big screen. */
   reactions: ["😱", "😂", "🙏", "💛"],
 
+  /**
+   * Online mode (presenter toggles it in the lobby): players are at home, watching a shared screen.
+   * - Phones play the key sounds themselves and reveal results revealDelayMs late, so they land
+   *   together with the (delayed) shared screen instead of spoiling it. The green light stays on
+   *   server time, so the race is as fair as in class.
+   * - Quick shouts replace the room's voice: tapped on the phone, shown with the nickname on screen.
+   */
+  online: {
+    revealDelayMs: 1500,
+    shouts: ["ย้ายเลย!", "ไม่ยุติธรรม!", "😭 ถอยไปท้าย", "555+", "ลุ้นนน 🥁", "โห…"],
+  },
+
   /** Client timing (sent to clients). */
   client: {
     tapBatchMs: 500,
@@ -96,6 +108,8 @@ export const config = {
     maxTapsPerSec: 25,
     /** One reaction per player per this many ms. */
     reactEveryMs: 200,
+    /** One quick shout per player per this many ms (online mode). */
+    shoutEveryMs: 1500,
     /** Wipe all game data after this many hours without any activity. */
     idleWipeHours: 6,
   },
@@ -113,6 +127,7 @@ export const publicConfig = {
   nicknameMaxChars: config.nicknameMaxChars,
   emojis: config.emojis,
   reactions: config.reactions,
+  online: config.online,
   client: config.client,
 };
 

@@ -93,6 +93,8 @@ interface GameState {
   lastActivity: number;
   /** Server ms when the host paused, or null. */
   pausedAt: number | null;
+  /** Online mode (chosen in the lobby). */
+  online: boolean;
 }
 
 /** Per-socket data that survives hibernation (serializeAttachment). */
@@ -144,6 +146,7 @@ function freshState(now: number): GameState {
     totalTaps: 0,
     lastActivity: now,
     pausedAt: null,
+    online: false,
   };
 }
 
@@ -226,6 +229,8 @@ export class GameRoom extends DurableObject<Env> {
   private lastPruneAt = 0;
   private pendingFouls: PlayerTag[] = [];
   private pendingReacts: string[] = [];
+  private pendingShouts: { emoji: string; nickname: string; text: string }[] = [];
+  private lastShoutAt = new Map<string, number>();
   private lastReactAt = new Map<string, number>();
 
   constructor(ctx: DurableObjectState, env: Env) {
@@ -236,6 +241,7 @@ export class GameRoom extends DurableObject<Env> {
       const saved = await ctx.storage.get<GameState>(STATE_KEY);
       this.state = saved && saved.v === 2 ? saved : freshState(Date.now());
       this.state.pausedAt ??= null; // states saved before pause existed
+      this.state.online ??= false;
       this.state.eventTimes ??= eventTimeline(this.state.eventOrder ?? []).times;
     });
   }
@@ -468,6 +474,18 @@ export class GameRoom extends DurableObject<Env> {
         return;
       }
 
+      case "shout": {
+        if (!p || !s.online || s.phase === "LOBBY") return;
+        const i = Math.floor(Number(msg.i));
+        if (!(i >= 0 && i < config.online.shouts.length)) return;
+        const last = this.lastShoutAt.get(pid) ?? 0;
+        if (now - last < config.server.shoutEveryMs) return;
+        this.lastShoutAt.set(pid, now);
+        if (this.pendingShouts.length < 30) this.pendingShouts.push({ emoji: p.emoji, nickname: p.nickname, text: config.online.shouts[i] });
+        this.markLive();
+        return;
+      }
+
       default:
         return; // host messages from players are ignored
     }
@@ -480,6 +498,12 @@ export class GameRoom extends DurableObject<Env> {
         if (this.state.phase !== "END") {
           if (this.state.pausedAt !== null) this.resume(now);
           this.advance(now);
+        }
+        return;
+      case "host:online":
+        if (this.state.phase === "LOBBY" && typeof msg.on === "boolean" && msg.on !== this.state.online) {
+          this.state.online = msg.on;
+          this.phaseChanged();
         }
         return;
       case "host:pause":
@@ -719,7 +743,9 @@ export class GameRoom extends DurableObject<Env> {
     this.rosterVersion++;
     this.pendingFouls = [];
     this.pendingReacts = [];
+    this.pendingShouts = [];
     this.lastReactAt.clear();
+    this.lastShoutAt.clear();
     await this.ctx.storage.deleteAll();
     await this.ctx.storage.deleteAlarm();
     this.alarmAt = null;
@@ -886,6 +912,7 @@ export class GameRoom extends DurableObject<Env> {
       phaseStartAt: s.phaseStartAt,
       phaseEndAt: s.phaseEndAt,
       pausedAt: s.pausedAt,
+      online: s.online,
       goAt: s.goAt,
       raceEndAt: s.raceEndAt,
       joined,
@@ -967,6 +994,8 @@ export class GameRoom extends DurableObject<Env> {
     const hosts = this.sockets().filter((x) => x.att.role === "host");
     const fouls = this.pendingFouls;
     const reacts = this.pendingReacts;
+    const shouts = this.pendingShouts;
+    this.pendingShouts = [];
     this.pendingFouls = [];
     this.pendingReacts = [];
     if (hosts.length === 0) return;
@@ -992,6 +1021,7 @@ export class GameRoom extends DurableObject<Env> {
     }
     if (fouls.length) msg.fouls = fouls;
     if (reacts.length) msg.reacts = reacts;
+    if (shouts.length) msg.shouts = shouts;
     if (s.phase === "GUESS") msg.guesses = this.guessCounts();
     const text = JSON.stringify(msg);
     for (const { ws } of hosts) {

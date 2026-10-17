@@ -68,6 +68,8 @@ Both videos use procedurally generated background music, so there are no copyrig
 Total after start ≈ 2:40 (the closing message on the end screen appears 15 s later). The host can pause at any moment with `P`.
 
 
+**Online mode** (lobby toggle, button or `O`; for players at home watching a shared screen): phones play the key sounds themselves (green light, drum roll, ding-dong, fanfare) after one tap; phones reveal the call result and queue moves `online.revealDelayMs` (1.5 s) late so they land with the delayed shared screen instead of spoiling it (the green light stays on server time); quick-shout buttons on phones ("ย้ายเลย!", "ไม่ยุติธรรม!", …) appear with the nickname on the shared screen; the winner gets a screenshot tip and everyone gets a digital "ขนมใจ 💛" card with a share button instead of snacks.
+
 **Where players look.** Phones are rich only when there is something to do (patient card, race, gamble, guess). In the watch phases (LINEUP, EVENTS, CALL, ZOOM) the phone shows a bouncing "👆 ดูจอใหญ่", a small queue number and a buzz on each change, so eyes go to the big screen (Kahoot-style). Players who never look up still get the message: after the call and at the end the phone shows one summary line. Small emoji reaction buttons (😱😂🙏💛) at the bottom float up on the big screen.
 
 Presenter script and checklists: [`RUNSHEET.th.md`](RUNSHEET.th.md) (Thai). Snack-helper guide: [`helper-guide.html`](helper-guide.html).
@@ -99,7 +101,7 @@ RUNSHEET.th.md      presenter run sheet (Thai)
 | `/host?key=HOST_KEY` | presenter | key is moved to `sessionStorage` and removed from the address bar on load |
 | `/ws` | both | WebSocket; becomes host only if `hello.hostKey` matches the `HOST_KEY` secret |
 
-Host keys: `Space` / `→` / `PageDown` = start (in the lobby) or skip the current phase · `P` = pause / resume · `M` = sound on/off · `R` = reset (press twice within 3 s; also the Reset button) · `H` = hide control bar · `F` = fullscreen. Browsers only play audio after a gesture, so any key or click on the host page unlocks sound.
+Host keys: `Space` / `→` / `PageDown` = start (in the lobby) or skip the current phase · `O` = classroom / online mode (lobby) · `P` = pause / resume · `M` = sound on/off · `R` = reset (press twice within 3 s; also the Reset button) · `H` = hide control bar · `F` = fullscreen. Browsers only play audio after a gesture, so any key or click on the host page unlocks sound.
 
 ## Setup
 
@@ -196,11 +198,13 @@ It runs one host and N players through a full game on the real timeline (about 2
 - two "early birds" press before the green light; ~10 % never tap;
 - ~10 % of players drop and reconnect during the race and the events;
 - half the players opt into the gamble; everyone answers the guess; some send reactions;
+- online mode is on and some players send quick shouts (extras inside the rate limit are dropped);
 - the host pauses for 3 s during the events and resumes.
 
 It asserts:
 
 - the lineup is a permutation of all players, false starters at the very back and non-tappers just before them;
+- the host receives exactly one shout per shouting player;
 - pause freezes the phase and events, and resume shifts the timeline by the paused time;
 - all four events fire and the gamble resolves with lucky + unlucky = movers;
 - exactly one winner: queue #1, the only phone with `won`, with the same claim code as the big screen;

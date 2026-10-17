@@ -115,8 +115,12 @@
     }
   }
 
+  /** Online mode: results show this late so they land with the (delayed) shared screen. */
+  const online = () => !!(snap && snap.online);
+  const revealDelay = () => (online() ? snap.config.online.revealDelayMs : 0);
+
   function callRevealed(now) {
-    return snap.phase === "CALL" && now >= snap.phaseStartAt + snap.config.timeline.callRevealMs;
+    return snap.phase === "CALL" && now - revealDelay() >= snap.phaseStartAt + snap.config.timeline.callRevealMs;
   }
 
   function pickScreen(now) {
@@ -171,6 +175,12 @@
       }
     }
     $("end-claim").hidden = !(you && you.won);
+    $("sound-btn").hidden = !online();
+    document.querySelectorAll(".shouts").forEach((el) => (el.hidden = !online()));
+    $("win-tip").hidden = !online();
+    $("end-candy").hidden = online();
+    $("end-heart").hidden = !online();
+    if (you) $("heart-from").textContent = `${you.emoji} ${fmt(STR.heartFrom, { name: you.nickname })}`;
     $("end-q").hidden = !(snap.phase === "END" && now >= snap.phaseStartAt + snap.config.timeline.endSystemAtSec * 1000);
     if (id === "s-guess") renderGuess();
     if (id === "s-reveal") renderZoom(now);
@@ -196,16 +206,21 @@
     $("q-urg").dataset.u = String(you.urgency);
 
     // Queue number stays small; a change only recolours it and buzzes.
+    // Online: hold the old number until the shared screen shows the event (its reveal delay).
     const mini = $("q-mini");
-    mini.textContent = you.pos == null ? "" : `${STR.youPos} ${num(you.pos)}`;
-    if (lastPos !== null && you.pos !== lastPos) {
+    const ev0 = snap.phase === "EVENTS" ? snap.events[snap.events.length - 1] : null;
+    const movedAt = ev0 ? (ev0.kind === "gamble" ? ev0.decideUntil : ev0.at) : 0;
+    const hold = online() && ev0 && lastPos !== null && now < movedAt + revealDelay();
+    const shownPos = hold ? lastPos : you.pos;
+    mini.textContent = shownPos == null ? "" : `${STR.youPos} ${num(shownPos)}`;
+    if (!hold && lastPos !== null && you.pos !== lastPos) {
       const up = you.pos < lastPos;
       mini.classList.remove("up", "down");
       void mini.offsetWidth;
       mini.classList.add(up ? "up" : "down");
       buzz(up ? [40, 40, 40] : 150);
     }
-    lastPos = you.pos;
+    if (!hold) lastPos = you.pos;
 
     let sub = "";
     if (snap.phase === "LINEUP" && you.foul) sub = STR.youFoul;
@@ -398,6 +413,78 @@
     buzz(20);
   });
 
+  // ------------------------------------------------------------ online mode: shouts, phone sound, heart card
+  let shoutsBuilt = false;
+  let lastShout = 0;
+  function buildShouts(list) {
+    if (shoutsBuilt || !list) return;
+    shoutsBuilt = true;
+    document.querySelectorAll(".shouts").forEach((bar) => {
+      list.forEach((text, i) => {
+        const b = document.createElement("button");
+        b.textContent = text;
+        b.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          if (Date.now() - lastShout < 1500) return; // matches the server's rate limit
+          lastShout = Date.now();
+          net.send({ type: "shout", i });
+          b.classList.remove("hit");
+          void b.offsetWidth;
+          b.classList.add("hit");
+          buzz(10);
+        });
+        bar.appendChild(b);
+      });
+    });
+  }
+
+  // Phones can only play sound after a tap; any tap in online mode unlocks it.
+  function unlockSound() {
+    if (!online()) return;
+    SFX.unlock();
+    if (SFX.unlocked) $("sound-btn").textContent = STR.phoneSoundReady;
+  }
+  document.addEventListener("pointerdown", unlockSound);
+  $("sound-btn").addEventListener("click", unlockSound);
+
+  const played = new Set();
+  /** Key sounds on the phone itself, timed to the shared screen (the green light stays real-time). */
+  function phoneSounds(now) {
+    if (!online() || !SFX.unlocked || snap.pausedAt != null) return;
+    const D = revealDelay();
+    const cues = [];
+    if (snap.phase === "RACE" && snap.goAt) cues.push(["go", snap.goAt, () => SFX.go()]);
+    if (snap.phase === "EVENTS") snap.events.forEach((e) => cues.push([`ev${e.at}`, e.at + D, () => SFX.whoosh()]));
+    if (snap.phase === "CALL") {
+      const reveal = snap.phaseStartAt + snap.config.timeline.callRevealMs;
+      cues.push(["drum", snap.phaseStartAt + D, () => SFX.drumroll(snap.config.timeline.callRevealMs - 200)]);
+      cues.push(["reveal", reveal + D, () => { SFX.dingdong(); setTimeout(() => SFX.fanfare(), 600); }]);
+    }
+    if (snap.phase === "END") cues.push(["end", snap.phaseStartAt + D, () => SFX.fanfare()]);
+    for (const [id, at, fn] of cues) {
+      const k = `${snap.phase}:${snap.phaseStartAt}:${id}`;
+      if (now >= at && !played.has(k)) {
+        played.add(k);
+        if (now - at < 1500) fn(); // never play a cue late (e.g. after a refresh)
+      }
+    }
+  }
+
+  $("heart-share").addEventListener("click", async () => {
+    const you = snap && snap.you;
+    if (!you) return;
+    const text = fmt(STR.heartText, { name: you.nickname });
+    try {
+      if (navigator.share) await navigator.share({ text });
+      else {
+        await navigator.clipboard.writeText(text);
+        $("heart-note").textContent = STR.heartCopied;
+      }
+    } catch (_) {
+      /* share sheet dismissed */
+    }
+  });
+
   let reactsBuilt = false;
   function buildReacts(list) {
     if (reactsBuilt) return;
@@ -427,6 +514,8 @@
     if (!snap) return;
     const now = clock();
     buildReacts(snap.config.reactions);
+    buildShouts(snap.config.online && snap.config.online.shouts);
+    phoneSounds(now);
 
     if (screen === "s-tap" && snap.goAt) {
       const green = now >= snap.goAt && now < snap.raceEndAt;

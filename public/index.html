@@ -41,6 +41,7 @@
     <section class="screen" id="s-wait" hidden>
       <div class="me"><span class="emo" data-you="emoji"></span><span data-you="nickname"></span></div>
       <p class="big-msg" data-str="waitForHost"></p>
+      <button class="sound-btn" id="sound-btn" type="button" data-str="phoneSoundOn" hidden></button>
     </section>
 
     <!-- INTRO: patient card flips over -->
@@ -88,6 +89,7 @@
         <p class="tap-meta num" id="g-left"></p>
       </div>
       <p class="soft" id="g-chosen"></p>
+      <div class="shouts" hidden></div>
       <div class="reacts"></div>
     </section>
 
@@ -100,6 +102,8 @@
         <div class="label" data-str="claimCodeLabel"></div>
         <div class="code num" id="win-code"></div>
       </div>
+      <p class="soft strong" id="win-tip" data-str="winOnlineTip" hidden></p>
+      <div class="shouts" hidden></div>
       <div class="reacts"></div>
     </section>
 
@@ -118,14 +122,25 @@
         <div class="look-text" data-str="lookUp"></div>
       </div>
       <div class="q-sum" id="zoom-sum" hidden></div>
+      <div class="shouts" hidden></div>
       <div class="reacts"></div>
     </section>
 
     <!-- END -->
     <section class="screen" id="s-end" hidden>
-      <div class="win-emoji">🍬</div>
-      <p class="big-msg" data-str="endPhone"></p>
-      <p class="soft" data-str="endAsk"></p>
+      <div class="end-candy" id="end-candy">
+        <div class="win-emoji">🍬</div>
+        <p class="big-msg" data-str="endPhone"></p>
+        <p class="soft" data-str="endAsk"></p>
+      </div>
+      <!-- online mode: a digital "heart snack" card to send to a friend -->
+      <div class="heart-card" id="end-heart" hidden>
+        <div class="h-title" data-str="heartTitle"></div>
+        <div class="h-from" id="heart-from"></div>
+        <p class="h-body" data-str="heartBody"></p>
+        <button class="btn-primary" id="heart-share" type="button" data-str="heartShare"></button>
+        <p class="soft" id="heart-note"></p>
+      </div>
       <div class="claim" id="end-claim" hidden>
         <div class="label" data-str="claimCodeLabel"></div>
         <div class="code num" id="end-code"></div>
@@ -137,6 +152,7 @@
     <script src="/js/strings.js"></script>
     <script src="/js/net.js"></script>
     <script src="/js/confetti.js"></script>
+    <script src="/js/sfx.js"></script>
     <script src="/js/player.js"></script>
   </body>
 </html>

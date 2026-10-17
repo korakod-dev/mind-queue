@@ -15,6 +15,7 @@
  *  - ~10 % of players disconnect and reconnect (same playerId) during RACE and EVENTS
  *  - EVENTS: about half the players answer "move" to the gamble
  *  - GUESS: every player picks a random answer; players send a few reactions
+ *  - online mode is on; some players send quick shouts (a second one inside the rate limit is dropped)
  *  - the host pauses for 3 s during EVENTS, then resumes
  *
  * Asserts
@@ -136,6 +137,7 @@ class SimClient {
         } else if (msg.type === "live") {
           if (this.samples.length >= 3) latency.live.push(recv + this.offset - msg.serverNow);
           this.live = msg;
+          if (msg.shouts) this.shoutsSeen = (this.shoutsSeen || 0) + msg.shouts.length;
         } else if (msg.type === "error") {
           log(`${this.name} got error`, msg.code);
         }
@@ -252,6 +254,9 @@ async function main() {
   const tappers = players.slice(2 + idle.length);
   const droppers = tappers.filter((_, i) => i % 10 === 3);
 
+  // Online mode on: players also send quick shouts.
+  host.send({ type: "host:online", on: true });
+  await waitFor(() => host.snap.online === true, 3000, "online mode on");
   host.send({ type: "host:next" });
   await waitFor(() => host.snap.phase === "INTRO", 5000, "INTRO");
   log("INTRO");
@@ -282,6 +287,7 @@ async function main() {
     if (choice === "move") movers.add(p);
     setTimeout(() => p.send({ type: "gamble", choice }), rand(200, 4000));
     if (i % 7 === 0) setTimeout(() => p.send({ type: "react", i: i % 4 }), rand(0, 3000));
+    if (i % 5 === 0) setTimeout(() => { p.send({ type: "shout", i: i % 6 }); p.send({ type: "shout", i: 0 }); }, rand(0, 3000)); // 2nd is rate-limited
   });
   await Promise.all(droppers.map((p) => sleep(rand(0, 2000)).then(() => p.dropAndReconnect(rand(200, 800)))));
 
@@ -333,6 +339,8 @@ async function main() {
   check(idleBlock.every((e) => idleNames.has(e.nickname)), "non-tappers sit right before the false starters");
   check(lineup.stats.tappers === tappers.length, `every tapper got a valid first tap (${lineup.stats.tappers}/${tappers.length})`);
 
+  const shouters = players.filter((_, i) => i % 5 === 0).length;
+  check(host.shoutsSeen === shouters, `online: host got one shout per shouting player (${host.shoutsSeen}/${shouters}, extra ones rate-limited)`);
   check(frozen, "pause froze the phase and the events");
   check(pauseShift >= 2900 && pauseShift <= 4500, `resume shifted the timeline by the paused time (${pauseShift} ms)`);
   check(call.events.length === 4, "all four events fired");

@@ -8,7 +8,7 @@
  *   messages (joined / online / taps / top tappers / false starts / reactions / guesses).
  * - Timed effects (green light, call reveal, zoom timeline) are driven by the synced server
  *   clock, so a refresh lands on the same moment.
- * - Keyboard: Space or → = start / skip phase, P = pause / resume, M = sound on/off, R = reset (press twice),
+ * - Keyboard: Space or → = start / skip phase, P = pause / resume, O = online mode (lobby), M = sound on/off, R = reset (press twice),
  *   H = hide bar, F = fullscreen. Any key or click also unlocks audio.
  */
 (function () {
@@ -63,6 +63,39 @@
     },
   });
 
+  // ------------------------------------------------------------ online mode (lobby toggle)
+  const ONLINE_KEY = "mq.online";
+  let onlineWanted = false;
+  try {
+    onlineWanted = localStorage.getItem(ONLINE_KEY) === "1";
+  } catch (_) {}
+
+  /** Keep the server's online flag in line with the presenter's choice (lobby only; a reset clears it). */
+  function syncOnline() {
+    const btn = $("online-toggle");
+    btn.textContent = onlineWanted ? STR.modeOnline : STR.modeClass;
+    btn.classList.toggle("on", onlineWanted);
+    if (snap && snap.phase === "LOBBY" && snap.online !== onlineWanted) net.send({ type: "host:online", on: onlineWanted });
+  }
+
+  function toggleOnline() {
+    if (!snap || snap.phase !== "LOBBY") return;
+    onlineWanted = !onlineWanted;
+    try {
+      localStorage.setItem(ONLINE_KEY, onlineWanted ? "1" : "0");
+    } catch (_) {}
+    syncOnline();
+  }
+
+  function addShout(sh) {
+    const layer = $("shouts-layer");
+    const d = el("div", "shout");
+    d.append(el("b", null, `${sh.emoji} ${sh.nickname}: `), sh.text);
+    d.addEventListener("animationend", (e) => e.animationName === "shout-out" && d.remove());
+    layer.appendChild(d);
+    while (layer.children.length > 6) layer.firstChild.remove();
+  }
+
   function showBadKey() {
     try {
       sessionStorage.removeItem(KEY_STORE);
@@ -95,6 +128,7 @@
       }
       if (msg.fouls) msg.fouls.forEach(addFoul);
       if (msg.reacts) msg.reacts.forEach(floatReact);
+      if (msg.shouts) msg.shouts.forEach(addShout);
       if (msg.guesses) {
         live.guesses = msg.guesses;
         if (stage === "h-guess") renderBars($("guess-bars"), live.guesses, null);
@@ -187,6 +221,8 @@
     if (entered && prev) onEnterPhase(s.phase);
     setMusicFor(s.phase);
 
+    syncOnline();
+    $("end-ask").textContent = s.online ? STR.endAskOnline : STR.endAsk;
     $("paused").hidden = s.pausedAt == null;
     $("ctl-pause").hidden = s.phaseEndAt == null;
     $("ctl-pause").textContent = s.pausedAt != null ? STR.ctlResume : STR.ctlPause;
@@ -778,6 +814,7 @@
   $("ctl-next").addEventListener("click", next);
   $("ctl-sound").addEventListener("click", toggleSound);
   $("ctl-pause").addEventListener("click", pause);
+  $("online-toggle").addEventListener("click", toggleOnline);
   $("ctl-reset").addEventListener("click", reset);
   $("ctl-hide").addEventListener("click", () => toggleBar(true));
   $("ctl-show").addEventListener("click", () => toggleBar(false));
@@ -799,6 +836,10 @@
       case "PageDown": // presentation clickers
         e.preventDefault();
         next();
+        break;
+      case "o":
+      case "O":
+        toggleOnline();
         break;
       case "p":
       case "P":

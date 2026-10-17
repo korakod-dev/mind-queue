@@ -186,6 +186,66 @@ body {
   background: linear-gradient(90deg, var(--teal), var(--peach));
 }
 
+/* Lobby mode toggle (classroom / online) */
+.mode-toggle {
+  align-self: center;
+  font-size: var(--small);
+  font-weight: 700;
+  padding: 0.8vh 1.6vw;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 3px solid var(--line);
+  color: var(--ink-soft);
+  box-shadow: var(--shadow);
+}
+
+.mode-toggle.on {
+  border-color: var(--teal);
+  color: var(--teal-strong);
+}
+
+/* Online quick shouts: "🐱 มิ้น: ย้ายเลย!" stacking up from the bottom-left */
+.shouts-layer {
+  position: fixed;
+  left: 2vw;
+  bottom: 10vh;
+  z-index: 46;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 0.8vh;
+  pointer-events: none;
+}
+
+.shout {
+  font-size: var(--small);
+  font-weight: 700;
+  background: #1d4743;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.6vh 1.2vw;
+  box-shadow: var(--shadow);
+  animation: shout-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1), shout-out 0.6s ease-in 3.9s forwards;
+}
+
+.shout b {
+  color: #ffd27d;
+}
+
+@keyframes shout-in {
+  from {
+    transform: translateX(-30px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes shout-out {
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
 /* Pause badge */
 .paused-badge {
   position: fixed;

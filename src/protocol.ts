@@ -42,10 +42,14 @@ export type ClientMsg =
   | { type: "guess"; choice: number }
   /** Index into config.reactions. */
   | { type: "react"; i: number }
+  /** Index into config.online.shouts (online mode only). */
+  | { type: "shout"; i: number }
   /** Start (LOBBY) or skip the current timed phase. */
   | { type: "host:next" }
   /** Pause / resume the whole timeline. */
   | { type: "host:pause" }
+  /** Online mode on/off (lobby only). */
+  | { type: "host:online"; on: boolean }
   | { type: "host:reset" };
 
 // ---------------------------------------------------------------- server → client
@@ -120,6 +124,8 @@ export interface Snapshot {
   /** Server ms. phaseEndAt is null for LOBBY and END. */
   phaseStartAt: number | null;
   phaseEndAt: number | null;
+  /** Online mode: players are at home watching a shared screen (see config.online). */
+  online: boolean;
   /** Server ms when the host paused, or null. While paused every clock-driven view freezes at this time. */
   pausedAt: number | null;
   /** RACE: green light + end of tapping (server ms). */
@@ -166,6 +172,8 @@ export interface LiveMsg {
   fouls?: PlayerTag[];
   /** New reactions since the last live message. */
   reacts?: string[];
+  /** New quick shouts since the last live message (online mode). */
+  shouts?: { emoji: string; nickname: string; text: string }[];
   /** GUESS: live answer counts per bucket. */
   guesses?: number[];
 }

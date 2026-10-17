@@ -436,6 +436,76 @@ body {
   animation: pop 0.3s ease-out;
 }
 
+/* Online mode: quick shouts, sound button, heart card */
+.shouts {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(68px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.shouts button {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #1d4743;
+  color: #fff;
+  box-shadow: var(--shadow);
+}
+
+.shouts button.hit {
+  animation: pop 0.3s ease-out;
+}
+
+.screen.look:has(.shouts:not([hidden])) {
+  padding-bottom: calc(150px + env(safe-area-inset-bottom));
+}
+
+.sound-btn {
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  background: var(--mint);
+  color: var(--teal-strong);
+  border: 2px solid var(--teal);
+}
+
+.heart-card {
+  width: min(100%, 340px);
+  background: linear-gradient(160deg, #fff6d8, #ffe1ea);
+  color: #23403d;
+  border-radius: 24px;
+  padding: 22px 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: pop 0.6s ease-out;
+}
+
+.heart-card .h-title {
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.heart-card .h-from {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.heart-card .h-body {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
 /* Pause */
 .paused-pill {
   position: fixed;
