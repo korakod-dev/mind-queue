@@ -56,13 +56,13 @@ Both videos use procedurally generated background music, so there are no copyrig
 | 1 | INTRO | "หมอว่าง 1 คิว"; each phone flips a random, fictional patient card: 🔴 very urgent / 🟡 medium / 🟢 not urgent | 10 s |
 | 2 | RACE | Red light for a random 2.5–5 s, then green for 6 s. A press before green = false start (back of the queue). Queue order = arrival order of each player's **first** press after green; the big screen shows the top tappers to bait mashing | ~11 s |
 | 3 | LINEUP | Every emoji lines up at the exam-room door. Auto twist cards: fastest player, "most taps → queue #38", room total "but only the first tap counted", false starts | 18 s |
-| 4 | EVENTS | Four queue events reshuffle the line live (each card adds an "in real life" line naming the access barrier it stands for): 📄 documents incomplete (front 5 → back), 🏥 free slot at a far hospital (players opt in, 50/50 front or back), 🔀 queue system crash (10 swap), 📞 cancellation (someone from the back half → #1) | 40 s |
+| 4 | EVENTS | Four queue events reshuffle the line live (each card adds an "in real life" line naming the access barrier it stands for): 📄 documents incomplete (front 5 → back), 🏥 free slot at a far hospital (players opt in, 50/50 front or back), 🔀 queue system crash (10 swap), 📞 cancellation (someone from the back half → #1). The title reads for 4 s; each card stays ~9–11 s and its "in real life" line arrives 1.5 s after the card | 52 s |
 | 5 | CALL | Drum roll → ding-dong "ขอเชิญหมายเลข 1" → the winner + 3-digit claim code (**the only prize**) → the line recolours by urgency: "seen: 🟢 · still waiting: 🔴 22" | 20 s |
 | 6 | GUESS | "How many rooms like ours per psychiatrist?" 4 choices, live bar chart | 12 s |
 | 7 | ZOOM | Answer reveal → our room becomes 1 tile among ~1,166 → statistics + source | 34 s |
 | 8 | END | First 15 s: "ระหว่างรอหมอ… เพื่อนดูแลกันได้ 💛", "ask your neighbour how they've been", hotline 1323; snacks passed along each row. Then the closing message that leads into the talk: why psychiatrists are scarce (few graduates each year, heavy workload pushes many out of the public system, so even fewer remain while many people need care) and "is it time we looked after psychiatrists and kept them in the system?" (no numbers: none are sourced) | — |
 
-Total after start ≈ 2:26 (the closing message on the end screen appears 15 s later). The host can pause at any moment with `P`.
+Total after start ≈ 2:38 (the closing message on the end screen appears 15 s later). The host can pause at any moment with `P`.
 
 
 **Where players look.** Phones are rich only when there is something to do (patient card, race, gamble, guess). In the watch phases (LINEUP, EVENTS, CALL, ZOOM) the phone shows a bouncing "👆 ดูจอใหญ่", a small queue number and a buzz on each change, so eyes go to the big screen (Kahoot-style). Players who never look up still get the message: after the call and at the end the phone shows one summary line. Small emoji reaction buttons (😱😂🙏💛) at the bottom float up on the big screen.

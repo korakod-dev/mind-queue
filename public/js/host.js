@@ -389,6 +389,7 @@
     line.classList.toggle("show-urg", revealed);
   }
 
+  let lastCardAt = null;
   function renderHead() {
     const head = $("q-head");
     head.textContent = "";
@@ -415,6 +416,9 @@
         return;
       }
       const card = el("div", `ev-card ev-${ev.kind}`);
+      // Re-renders of the same card (gamble result, late joins, pause) skip the entrance animations.
+      if (ev.at === lastCardAt) card.classList.add("settled");
+      lastCardAt = ev.at;
       card.append(el("div", "ev-t", STR[`ev_${ev.kind}_t`]));
       let desc = STR[`ev_${ev.kind}_d`];
       if (ev.kind === "docs") desc = fmt(desc, { n: ev.moves.length || s.config.events.docsBack });

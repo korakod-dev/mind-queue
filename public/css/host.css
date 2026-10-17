@@ -610,16 +610,26 @@ body {
   font-weight: 600;
 }
 
-/* "In real life" line: the access barrier behind each event */
+/* "In real life" line: the access barrier behind each event. It arrives 1.5 s after the card,
+   once eyes have followed the line moving, so it is read last and stays readable. */
 .ev-real {
   display: inline-block;
-  margin-top: 1vh;
-  font-size: var(--small);
-  font-weight: 700;
-  color: #7a4b00;
-  background: #fff3d6;
+  margin-top: 1.2vh;
+  font-size: calc(var(--mid) * 0.92);
+  font-weight: 800;
+  color: #6b4100;
+  background: #ffe9b8;
+  border: 3px solid #f2a230;
   border-radius: 999px;
-  padding: 0.4vh 1.2vw;
+  padding: 0.5vh 1.4vw;
+  opacity: 0;
+  animation: rise-in 0.7s cubic-bezier(0.2, 1.2, 0.4, 1) 1.5s forwards;
+}
+
+.ev-card.settled,
+.ev-card.settled .ev-real {
+  animation: none;
+  opacity: 1;
 }
 
 .ev-g {
