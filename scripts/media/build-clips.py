@@ -5,7 +5,7 @@ Reads .work/log.json (from record.mjs); writes .work/host.mp4, .work/phone.mp4, 
 """
 import bisect, json, os, shutil, subprocess
 
-WORK = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".work")
+WORK = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".work-online" if os.environ.get("ONLINE") == "1" else ".work")
 os.chdir(WORK)
 d = json.load(open("log.json"))
 T0 = min(d["host"][0], d["phone"][0]); end = d["log"][-1]["t"]

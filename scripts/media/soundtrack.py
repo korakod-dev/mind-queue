@@ -3,7 +3,7 @@
 Reads .work/segments.json + .work/marks.json, writes .work/soundtrack.wav.
 """
 import json, os, numpy as np, wave
-WORK = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".work")
+WORK = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".work-online" if os.environ.get("ONLINE") == "1" else ".work")
 SR = 44100
 segs = json.load(open(os.path.join(WORK, "segments.json"))); marks = json.load(open(os.path.join(WORK, "marks.json"))); out = os.path.join(WORK, "soundtrack.wav")
 starts = []; t = 0

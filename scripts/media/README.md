@@ -6,7 +6,7 @@ server** (bot players + one simulated phone, driven through your installed Googl
 ```bash
 npm run dev                                  # in another terminal (port 8790)
 scripts/media/make-screenshots.sh            # → docs/screenshots/*.jpg (~3 min)
-scripts/media/make-videos.sh                 # → media/how-to-play.mp4, classroom-atmosphere.mp4, online-atmosphere.mp4 (~15 min)
+scripts/media/make-videos.sh                 # → media/how-to-play.mp4, classroom-atmosphere.mp4, online-atmosphere.mp4 (~20 min)
 ```
 
 Both scripts **reset the room**. Use them only against the local server (default `BASE_URL=http://localhost:8790`).
@@ -16,11 +16,12 @@ The host key is read from `.dev.vars`.
 
 | File | What it does |
 |---|---|
-| `paths.mjs` | Shared paths; temporary files go to `scripts/media/.work/` (git-ignored) |
+| `paths.mjs` | Shared paths; temporary files go to `scripts/media/.work/` (`.work-online/` for the online pass with `ONLINE=1`), both git-ignored |
 | `reset.mjs` | Resets the room over the WebSocket |
 | `bots.mjs` | Bot players: join, tap after the green light, answer the gamble and the guess |
 | `shots.mjs` | Plays a game and screenshots every phase (big screen 1600×900, phone 390×844 @2×) |
 | `win.mjs` | Solo game so the phone is queue #1 → the real winner screen |
+| `shots-online.mjs` / `win-online.mjs` | Online-mode screenshots (sound button, quick shouts, heart card, winner tip) |
 | `record.mjs` | Screencasts the big screen + phone during a full game and logs phase/event times |
 | `build-clips.py` | Exact 30 fps clips from the frames + the segment plan and captions (edit captions here) |
 | `templates.mjs` | Renders the caption/frame template for each video step |

@@ -113,6 +113,7 @@ function scene(t, img) {
     if (ph === "CALL" && !revealed) st.mouth = "o";
     if (revealed && p === winner) { st.raise = true; st.win = true; st.mouth = "laugh"; }
     if ((ph === "END" || ph === "CLOSE") && p === winner) st.win = true;
+    if (ph === "END" && !p.presenter) { st.screen = "#ffd6e3"; st.glow = 1; st.down = lt > 2 && lt < 9; } // "ขนมใจ" card
     if (ph === "ZOOM" || ph === "CLOSE") { st.phone = false; st.mouth = ph === "ZOOM" && lt > 12 ? "o" : "smile"; }
     if (p.presenter) { st.speak = ph === "JOIN" || ph === "CLOSE" || (ph === "END" && lt < 6); }
     p._st = st;
@@ -121,7 +122,7 @@ function scene(t, img) {
   }
   // who is talking / typing (bubbles in tiles)
   const say = (p, txt, from, to, speak = true) => { const a = Math.min(1, (lt - from) * 4, (to - lt) * 4); if (a > 0) { if (speak) p._st.speak = true; const u = Math.max(0.8, p.h / 176); bubble(txt, p.x + p.w / 2, p.y + 40 * u, 18 * u, a); } };
-  if (ph === "JOIN") { say(P(0), "สแกน QR บนจอ หรือกดลิงก์ในแชทนะ", 0.5, 6); say(P(2), "เข้าแล้วครับ!", 4, 7.5); }
+  if (ph === "JOIN") { say(P(0), "สแกน QR หรือกดลิงก์ในแชท แล้วแตะ 🔊 นะ", 0.5, 6); say(P(2), "เข้าแล้วครับ!", 4, 7.5); }
   if (ph === "INTRO") { say(P(1), "ได้แดง! 🔴", 1, 4); say(P(4), "ไม่รีบ 555", 2.5, 5.5); say(P(9), "ปานกลาง~", 4, 7); }
   if (ph === "RACE") { const gOut = o(MARKS.GREEN); say(P(6), "อย่าเพิ่งกด…", 0.6, gOut - 0.6); fouls.forEach((f, n) => say(f, "🚫 ลัดคิว!", gOut - 1 + n * 0.4, gOut + 3)); }
   if (ph === "LINEUP") { say(P(7), "กดตั้งเยอะ 😂", 4, 8); say(P(11), "อยู่ไหนเนี่ย", 1, 4.5); }
@@ -132,7 +133,7 @@ function scene(t, img) {
   if (ph === "CALL") { const r = o(MARKS.CALL + 2.6); say(P(3), "ลุ้นนน 🥁", 0.4, r); say(winner, "ได้แล้ว!! รหัสอยู่ในมือถือ", r + 0.8, r + 5); say(P(6), "ด่วนมากยังไม่ได้เลย", r + 5, r + 10); }
   if (ph === "GUESS") { say(P(10), "100 มั้ง?", 1, 4); say(P(1), "1,000?!", 3, 6.5); }
   if (ph === "ZOOM") say(P(7), "โห… จุดเดียวเอง", 13, 17);
-  if (ph === "END") { say(P(0), "ส่งขนมไม่ได้ ก็ถามเพื่อนในแชทกันนะ", 0.5, 6); say(P(2), "ช่วงนี้เป็นไงบ้าง? 💛", 5, 10); say(P(11), "ก็โอเค ขอบใจนะ", 8, 12.5); }
+  if (ph === "END") { say(P(0), "ส่งการ์ดขนมใจให้เพื่อนกันนะ", 0.5, 6); say(P(2), "ส่งขนมใจให้แล้ว 💛", 5, 10); say(P(11), "ช่วงนี้โอเค ขอบใจนะ", 8, 12.5); }
   if (ph === "CLOSE") { say(P(0), "ถึงเวลาแล้วหรือยัง…", 1, 6); say(P(8), "จริงแฮะ…", 8, 12, false); }
   for (const p of people) tileChrome(p, p._st); // name, mic, speaking / winner frame (after bubbles set "speak")
   // meeting-style floating reactions over the shared screen

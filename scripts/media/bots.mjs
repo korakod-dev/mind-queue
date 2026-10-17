@@ -27,6 +27,11 @@ for (let i = 0; i < N; i++) {
     if (g && gambled !== g.at) { gambled = g.at; await sleep(1000 + Math.random() * 3000); ws.send(JSON.stringify({ type: "gamble", choice: Math.random() < 0.45 ? "move" : "stay" })); }
     if (snap.phase === "GUESS" && guessed !== snap.phaseStartAt) { guessed = snap.phaseStartAt; await sleep(1000 + Math.random() * 6000); ws.send(JSON.stringify({ type: "guess", choice: Math.floor(Math.random() * 4) })); }
   });
+  // Online mode: now and then send a quick shout during the watch phases.
+  setInterval(() => {
+    if (ws.readyState !== 1 || !snap || !snap.online || !snap.you) return;
+    if (["LINEUP", "EVENTS", "CALL"].includes(snap.phase) && Math.random() < 0.06) ws.send(JSON.stringify({ type: "shout", i: Math.floor(Math.random() * 6) }));
+  }, 1000);
   setInterval(() => ws.readyState === 1 && ws.send("ping"), 15000);
   setInterval(() => ws.readyState === 1 && ws.send(JSON.stringify({ type: "time", t0: Date.now() })), 30000);
 }

@@ -8,6 +8,7 @@ const phone = await (await b.newContext({ viewport: { width: 390, height: 844 },
 const shot = (p, n) => p.screenshot({ path: path.join(SHOTS, n + ".jpg"), type: "jpeg", quality: 82 });
 const until = async (p, fn, t = 90000) => { const e = Date.now() + t; while (Date.now() < e) { if (await p.evaluate(fn)) return; await sleep(100); } throw new Error("timeout " + fn); };
 await host.goto(`${BASE}/host?key=${key}`); await sleep(1500); await host.keyboard.press("h");
+if (await host.evaluate(() => document.getElementById("online-toggle").classList.contains("on"))) { await host.keyboard.press("o"); await sleep(600); } // classroom mode
 await phone.goto(BASE + "/"); await phone.waitForSelector("#emoji-grid button");
 await phone.fill("#nick", "มิ้น"); await phone.locator("#emoji-grid button").nth(5).click();
 await shot(phone, "phone-join"); await phone.click("#join-btn");

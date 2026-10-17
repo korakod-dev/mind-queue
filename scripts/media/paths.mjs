@@ -5,7 +5,9 @@ import path from "node:path";
 
 export const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(HERE, "../..");
-export const WORK = path.join(HERE, ".work");
+/** ONLINE=1 runs the online-mode pass in its own work folder. */
+export const ONLINE = process.env.ONLINE === "1";
+export const WORK = path.join(HERE, ONLINE ? ".work-online" : ".work");
 export const SHOTS = path.join(ROOT, "docs/screenshots");
 export const BASE = process.env.BASE_URL || "http://localhost:8790";
 export const WS_URL = BASE.replace(/^http/, "ws") + "/ws";

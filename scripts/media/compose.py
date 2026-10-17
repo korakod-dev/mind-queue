@@ -2,7 +2,7 @@
 frames (.work/scr) that render-classroom.mjs draws onto the classroom's screen."""
 import json, os, shutil, subprocess
 
-WORK = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".work")
+WORK = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".work-online" if os.environ.get("ONLINE") == "1" else ".work")
 os.chdir(WORK)
 segs = json.load(open("segments.json"))
 with open("htp_list.txt", "w") as lst:

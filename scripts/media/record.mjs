@@ -1,7 +1,7 @@
 // Record a live game (big screen + one phone) with CDP screencast; log phase + event marks.
 import { chromium } from "playwright-core";
 import path from "node:path";
-import { ROOT, WORK, SHOTS, BASE, hostKey, sleep, HERE } from "./paths.mjs";
+import { ROOT, WORK, SHOTS, BASE, hostKey, sleep, HERE, ONLINE } from "./paths.mjs";
 import { writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { spawn } from "node:child_process";
 const key = hostKey();
@@ -24,6 +24,8 @@ async function cast(page, name, maxW, maxH) {
   return { frames, stop: () => cdp.send("Page.stopScreencast") };
 }
 await host.goto(`${BASE}/host?key=${key}`); await sleep(1200); await host.keyboard.press("h");
+if (ONLINE !== (await host.evaluate(() => document.getElementById("online-toggle").classList.contains("on")))) { await host.keyboard.press("o"); await sleep(600); }
+console.log("mode:", await host.textContent("#online-toggle"));
 await phone.goto(BASE + "/"); await phone.waitForSelector("#emoji-grid button");
 for (const p of [host, phone]) await p.addStyleTag({ content: "body::after{content:'';position:fixed;width:1px;height:1px;left:0;top:0;animation:kp 0.1s infinite alternate;}@keyframes kp{to{opacity:.99}}" });
 const hc = await cast(host, "host", 1600, 900);
