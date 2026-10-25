@@ -63,6 +63,8 @@ Screenshots come from a local game with 45 bot players. The big screen is shown 
 
 Both videos use procedurally generated background music, so there are no copyright issues.
 
+The full specification (rules, timings, protocol, tests) is in [`docs/SPEC.md`](docs/SPEC.md).
+
 ### Game flow
 
 | # | Phase | What happens | Timing |
