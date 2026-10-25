@@ -1,5 +1,7 @@
 # คิวหน้าห้องจิตแพทย์ — realtime classroom warm-up game
 
+> **Status: not deployed.** The Cloudflare Worker (`mind-queue`), its Durable Object, the `HOST_KEY` secret and the `queue.korakod.dev` domain binding were removed on 2026-10-25. This repository is the only copy; to run the game again, use [Local development](#local-development) or redeploy with the steps under [Deploy](#deploy). Links to `queue.korakod.dev` below are historical.
+
 A self-running ~3-minute ice-breaker ("คิวเดียว 3 นาที") for 67 students on their phones, plus a presenter big screen.
 Message: *psychiatrists are scarce; getting seen depends on speed and luck, not on who needs it most.*
 
@@ -143,6 +145,8 @@ npm run typecheck
 
 ## Deploy
 
+_Nothing is deployed right now (see the status note at the top). These steps recreate it from scratch; the first deploy creates a new, empty Durable Object._
+
 1. Log in once:
 
    ```bash
@@ -197,7 +201,7 @@ npm run loadtest
 ```
 
 ```bash
-HOST_KEY=<prod key> node scripts/loadtest.mjs https://queue.korakod.dev
+HOST_KEY=<prod key> node scripts/loadtest.mjs https://<your-deployed-host>
 ```
 
 Options: `--players 80` (default 80). Without a `HOST_KEY` env var it reads `.dev.vars`.
